@@ -4,12 +4,12 @@ from mysql.connector import Error
 
 
 class Conexion:
-    # Guardar como string, convertir después
+    # Usar las variables que Railway genera automáticamente (MYSQL_*)
     HOST = os.environ.get('MYSQL_HOST', 'localhost')
     DATABASE = os.environ.get('MYSQL_DATABASE', 'railway')
     USER = os.environ.get('MYSQL_USER', 'root')
     PASSWORD = os.environ.get('MYSQL_PASSWORD', '')
-    DB_PORT = os.environ.get('MYSQL_PORT', '3306')  # ← Sin int() acá
+    DB_PORT = os.environ.get('MYSQL_PORT', '3306')  # String, sin int()
     POOL_SIZE = 5
     POOL_NAME = "mylan_pool"
     _pool = None
@@ -18,7 +18,7 @@ class Conexion:
     def obtener_pool(cls):
         if cls._pool is None:
             try:
-                # Convertir a int AQUÍ, cuando se usa
+                # Convertir a int AQUÍ
                 port = int(cls.DB_PORT)
 
                 cls._pool = mysql.connector.pooling.MySQLConnectionPool(
@@ -37,9 +37,6 @@ class Conexion:
             except Error as e:
                 print(f"❌ Error al crear el pool: {e}")
                 print(f"🔍 Host: {cls.HOST}, Port: {cls.DB_PORT}, User: {cls.USER}, DB: {cls.DATABASE}")
-            except ValueError as e:
-                print(f"❌ Error convirtiendo puerto: {e}")
-                print(f"🔍 DB_PORT value: {cls.DB_PORT}")
         return cls._pool
 
     @classmethod
