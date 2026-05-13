@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}Reportes{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Reportes</div>
+      <div class="page-subtitle">Generá reportes con filtros y descargá en PDF/Excel</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:20px">
+
+    <!-- Reporte de Tareas -->
+    <div class="glow-card" style="padding:20px">
+      <div style="font-size:32px;text-align:center;margin-bottom:12px">📋</div>
+      <div style="font-size:14px;font-weight:600;color:var(--text1);text-align:center;margin-bottom:6px">Tareas</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:16px">
+        Estado, asignación, fechas de entrega
+      </div>
+      <a href="{{ url_for('reportes.tareas') }}" class="btn-glow btn-primary-glow" style="width:100%;justify-content:center;display:flex">
+        Ver reporte
+      </a>
+    </div>
+
+    <!-- Reporte de Campañas -->
+    <div class="glow-card" style="padding:20px">
+      <div style="font-size:32px;text-align:center;margin-bottom:12px">🎯</div>
+      <div style="font-size:14px;font-weight:600;color:var(--text1);text-align:center;margin-bottom:6px">Campañas</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:16px">
+        Presupuestos, gastos, ROI, estado
+      </div>
+      <a href="{{ url_for('reportes.campanas') }}" class="btn-glow btn-primary-glow" style="width:100%;justify-content:center;display:flex">
+        Ver reporte
+      </a>
+    </div>
+
+    <!-- Reporte de Influencers -->
+    <div class="glow-card" style="padding:20px">
+      <div style="font-size:32px;text-align:center;margin-bottom:12px">⭐</div>
+      <div style="font-size:14px;font-weight:600;color:var(--text1);text-align:center;margin-bottom:6px">Influencers</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:16px">
+        Estado, colaboraciones, contactos
+      </div>
+      <a href="{{ url_for('reportes.influencers') }}" class="btn-glow btn-primary-glow" style="width:100%;justify-content:center;display:flex">
+        Ver reporte
+      </a>
+    </div>
+
+    <!-- Reporte de Ecommerce -->
+    <div class="glow-card" style="padding:20px">
+      <div style="font-size:32px;text-align:center;margin-bottom:12px">💰</div>
+      <div style="font-size:14px;font-weight:600;color:var(--text1);text-align:center;margin-bottom:6px">Ecommerce</div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:16px">
+        Ventas mensuales, metas, influencers
+      </div>
+      <a href="{{ url_for('reportes.ecommerce') }}" class="btn-glow btn-primary-glow" style="width:100%;justify-content:center;display:flex">
+        Ver reporte
+      </a>
+    </div>
+
+  </div>
+
+  <div class="glow-card" style="background:rgba(59,130,246,.06);border-color:rgba(59,130,246,.2);padding:16px">
+    <div style="font-size:11px;color:#93c5fd;line-height:1.7">
+      <strong style="color:#60a5fa">💡 Funcionalidades:</strong><br>
+      • Filtrar datos por fecha, estado, usuario o campaña<br>
+      • Exportar reportes en formato PDF o Excel<br>
+      • Estadísticas y métricas clave de cada módulo<br>
+      • Vista previa antes de descargar
+    </div>
+  </div>
+</div>
+{% endblock %}

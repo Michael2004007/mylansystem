@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}Reporte de Campañas{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Reporte de Campañas</div>
+      <div class="page-subtitle">{{ total }} campañas registradas</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <a href="{{ url_for('reportes.campanas_pdf') }}" class="btn-glow btn-danger-glow">📄 Descargar PDF</a>
+      <a href="{{ url_for('reportes.campanas_excel') }}" class="btn-glow btn-success-glow">📊 Descargar Excel</a>
+      <a href="{{ url_for('reportes.index') }}" class="btn-glow btn-ghost">← Volver</a>
+    </div>
+  </div>
+
+  <!-- Estadísticas -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:16px">
+    <div class="stat-card">
+      <div class="sc-icon" style="background:rgba(59,130,246,.12);color:var(--blue2)">📊</div>
+      <div class="sc-val">{{ total }}</div>
+      <div class="sc-lbl">Total</div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-icon" style="background:rgba(16,185,129,.12);color:var(--green)">✅</div>
+      <div class="sc-val">{{ activas }}</div>
+      <div class="sc-lbl">Activas</div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-icon" style="background:rgba(100,116,139,.12);color:var(--text3)">🏁</div>
+      <div class="sc-val">{{ finalizadas }}</div>
+      <div class="sc-lbl">Finalizadas</div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-icon" style="background:rgba(139,92,246,.12);color:var(--violet2)">💰</div>
+      <div class="sc-val">${{ '{:,.0f}'.format(presupuesto_total).replace(',','.') }}</div>
+      <div class="sc-lbl">Presupuesto total</div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-icon" style="background:rgba(239,68,68,.12);color:var(--red)">💸</div>
+      <div class="sc-val">${{ '{:,.0f}'.format(gastado_total).replace(',','.') }}</div>
+      <div class="sc-lbl">Gastado total</div>
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  <div class="glow-card">
+    <table class="dark-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Fechas</th>
+          <th>Presupuesto</th>
+          <th>Gastado</th>
+          <th>% Ejecutado</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in campanas %}
+        {% set pct_gastado = ((c.gastado / c.presupuesto * 100) | round(0) | int) if c.presupuesto and c.gastado else 0 %}
+        <tr>
+          <td style="color:var(--text3)">#{{ c.id }}</td>
+          <td style="color:var(--text1);font-weight:500">{{ c.nombre }}</td>
+          <td style="font-size:11px;color:var(--text3)">
+            {{ c.fecha_inicio.strftime('%d/%m/%Y') if c.fecha_inicio else '—' }} -
+            {{ c.fecha_fin.strftime('%d/%m/%Y') if c.fecha_fin else '—' }}
+          </td>
+          <td style="color:var(--violet2);font-weight:600">
+            ${{ '{:,.0f}'.format(c.presupuesto).replace(',','.') if c.presupuesto else '—' }}
+          </td>
+          <td style="color:var(--red);font-weight:600">
+            ${{ '{:,.0f}'.format(c.gastado).replace(',','.') if c.gastado else '0' }}
+          </td>
+          <td>
+            <span class="badge-{% if pct_gastado >= 90 %}red{% elif pct_gastado >= 70 %}amber{% else %}green{% endif %}">
+              {{ pct_gastado }}%
+            </span>
+          </td>
+          <td>
+            {% if c.status == 'activa' %}<span class="badge-green">Activa</span>
+            {% elif c.status == 'finalizada' %}<span class="badge-gray">Finalizada</span>
+            {% else %}<span class="badge-blue">{{ c.status.capitalize() }}</span>{% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" style="text-align:center;color:var(--text3);padding:24px">No hay campañas registradas.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

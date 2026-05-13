@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}Influencers{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Influencers</div>
+      <div class="page-subtitle">Base de datos de influencers y colaboraciones</div>
+    </div>
+    <div style="display:flex;gap:6px">
+      <a href="{{ url_for('influencers.descargar_plantilla') }}" class="btn-glow btn-ghost">↓ Modelo Excel</a>
+      <a href="{{ url_for('influencers.importar') }}" class="btn-glow btn-ghost">↑ Importar Excel</a>
+      <a href="{{ url_for('influencers.nuevo') }}" class="btn-glow btn-primary-glow">+ Agregar</a>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div style="display:flex;gap:2px;border-bottom:1px solid var(--dk-border);margin-bottom:14px">
+    <a href="{{ url_for('influencers.index') }}"
+       class="tab-link {{ 'active' if not request.args.get('estado') and request.path != '/influencers/colaboraciones' }}">Todos</a>
+    <a href="{{ url_for('influencers.index', estado='trabajaron') }}"
+       class="tab-link {{ 'active' if request.args.get('estado')=='trabajaron' }}">Ya trabajaron</a>
+    <a href="{{ url_for('influencers.index', estado='nuevo') }}"
+       class="tab-link {{ 'active' if request.args.get('estado')=='nuevo' }}">Nuevos</a>
+    <a href="{{ url_for('influencers.index', estado='sugerido') }}"
+       class="tab-link {{ 'active' if request.args.get('estado')=='sugerido' }}">Sugeridos</a>
+    <a href="{{ url_for('influencers.colaboraciones') }}"
+       class="tab-link {{ 'active' if request.path == '/influencers/colaboraciones' }}">📋 Colaboraciones</a>
+  </div>
+
+  <!-- FILTRO -->
+  <div class="filter-bar">
+    <form method="GET" style="display:flex;gap:8px;flex:1">
+      {% if request.args.get('estado') %}
+      <input type="hidden" name="estado" value="{{ request.args.get('estado') }}">
+      {% endif %}
+      <input class="dark-input" type="text" name="q" placeholder="Buscar por nombre o handle..."
+             value="{{ request.args.get('q','') }}">
+      <button type="submit" class="btn-glow btn-ghost">Buscar</button>
+    </form>
+  </div>
+
+  <!-- GRID -->
+  {% if influencers %}
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">
+    {% for i in influencers %}
+      {% set ini = i.nombre.split(' ') %}
+      {% set initials = ini[0][0] ~ (ini[1][0] if ini|length > 1 else '') %}
+      {% set is_ecom = i.es_ecommerce if i.es_ecommerce is defined else false %}
+      {% set url_eliminar = url_for('influencers.eliminar', id=i.id) %}
+      <div class="glow-card" style="text-align:center;padding:18px 14px{% if is_ecom %};border-color:rgba(6,182,212,.4){% endif %}">
+        <div style="width:48px;height:48px;border-radius:50%;
+                    background:linear-gradient(135deg,rgba(59,130,246,.3),rgba(139,92,246,.3));
+                    border:1px solid rgba(59,130,246,.3);
+                    display:flex;align-items:center;justify-content:center;
+                    font-weight:700;font-size:14px;margin:0 auto 10px;color:#93c5fd">
+          {{ initials | upper }}
+        </div>
+        <div style="font-size:12px;font-weight:600;color:var(--text1)">{{ i.nombre }}</div>
+        <div style="font-size:10px;color:var(--text3);margin-bottom:4px">
+          {{ i.handle }}
+          {% if is_ecom %}<span class="badge-cyan" style="margin-left:4px">Ecom</span>{% endif %}
+        </div>
+        <div style="margin-bottom:8px">
+          {% if i.estado == 'trabajaron' %}<span class="badge-green">Ya trabajó</span>
+          {% elif i.estado == 'nuevo' %}<span class="badge-blue">Nuevo</span>
+          {% elif i.estado == 'sugerido' %}<span class="badge-violet">Sugerido</span>
+          {% endif %}
+        </div>
+        <div style="display:flex;gap:4px;justify-content:center;margin-bottom:8px">
+          {% if i.url_ig %}
+          <a href="{{ i.url_ig }}" target="_blank"
+             style="font-size:10px;padding:3px 9px;border-radius:6px;
+                    background:rgba(255,255,255,.05);color:var(--text2);
+                    border:1px solid var(--dk-border2);text-decoration:none">IG</a>
+          {% endif %}
+          {% if i.whatsapp %}
+          <a href="https://wa.me/{{ i.whatsapp }}" target="_blank"
+             style="font-size:10px;padding:3px 9px;border-radius:6px;
+                    background:rgba(255,255,255,.05);color:var(--text2);
+                    border:1px solid var(--dk-border2);text-decoration:none">WA</a>
+          {% endif %}
+        </div>
+        <div style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap">
+          <a href="{{ url_for('influencers.colaborar', id=i.id) }}"
+             class="btn-glow btn-primary-glow" style="font-size:10px;padding:4px 10px">Colaborar</a>
+          <a href="{{ url_for('influencers.editar', id=i.id) }}"
+             class="btn-glow btn-cyan-glow" style="font-size:10px;padding:4px 10px">Editar</a>
+          <button class="btn-glow btn-danger-glow" style="font-size:10px;padding:4px 8px"
+                  onclick="confirmAction({icon:'✕',title:'¿Eliminar influencer?',text:'<strong>{{ i.nombre }}</strong> será eliminado.',url:'{{ url_eliminar }}',confirmText:'Sí, eliminar',type:'danger'})">✕</button>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="glow-card" style="text-align:center;color:var(--text3);padding:32px">
+    No hay influencers registrados.
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

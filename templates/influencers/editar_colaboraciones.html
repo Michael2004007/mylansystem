@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block title %}Editar colaboración{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Editar colaboración</div>
+      <div class="page-subtitle">{{ c.influencer_nombre or 'Colaboración' }}</div>
+    </div>
+    <a href="{{ url_for('influencers.colaboraciones') }}" class="btn-glow btn-ghost">Volver</a>
+  </div>
+
+  <div class="glow-card" style="max-width:760px">
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="form-grid three" style="margin-bottom:10px">
+        <div>
+          <label class="form-label">Tipo</label>
+          <select class="dark-input" name="tipo">
+            <option value="contenido" {{ 'selected' if c.tipo == 'contenido' else '' }}>Contenido</option>
+            <option value="ecom" {{ 'selected' if c.tipo == 'ecom' else '' }}>Ecom</option>
+            <option value="ecommerce" {{ 'selected' if c.tipo == 'ecommerce' else '' }}>Ecommerce</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Monto</label>
+          <input class="dark-input" type="number" step="0.01" name="monto" value="{{ c.monto or 0 }}">
+        </div>
+        <div>
+          <label class="form-label">% Comisión</label>
+          <input class="dark-input" type="number" step="0.01" name="pct_comision" value="{{ c.pct_comision or 0 }}">
+        </div>
+      </div>
+
+      <div class="form-grid three" style="margin-bottom:10px">
+        <div>
+          <label class="form-label">% Descuento</label>
+          <input class="dark-input" type="number" step="0.01" name="pct_descuento" value="{{ c.pct_descuento or '' }}">
+        </div>
+        <div>
+          <label class="form-label">Fecha entrega</label>
+          <input class="dark-input" type="date" name="fecha_entrega" value="{{ c.fecha_entrega or '' }}">
+        </div>
+        <div>
+          <label class="form-label">Código promo</label>
+          <input class="dark-input" type="text" name="codigo_promo" value="{{ c.codigo_promo or '' }}">
+        </div>
+      </div>
+
+      <div style="margin-bottom:10px">
+        <label class="form-label">Permuta tag</label>
+        <input class="dark-input" type="text" name="permuta_tag" value="{{ c.permuta_tag or '' }}">
+      </div>
+
+      <div style="margin-bottom:14px">
+        <label class="form-label">Detalle</label>
+        <textarea class="dark-input" name="detalle" rows="3">{{ c.detalle or '' }}</textarea>
+      </div>
+
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <a href="{{ url_for('influencers.colaboraciones') }}" class="btn-glow btn-ghost">Cancelar</a>
+        <button type="submit" class="btn-glow btn-primary-glow">Guardar cambios</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

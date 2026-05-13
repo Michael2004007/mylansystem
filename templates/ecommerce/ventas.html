@@ -1,0 +1,135 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="topbar">
+  <div>
+    <div class="page-title">Ventas</div>
+    <div class="page-subtitle">Historial completo de ventas</div>
+  </div>
+  <div style="display:flex;gap:8px">
+    <a href="{{ url_for('ecommerce.exportar_ventas') }}" class="btn-glow btn-ghost">↓ Exportar Excel</a>
+    <a href="{{ url_for('ecommerce.nueva_venta') }}" class="btn-glow btn-primary-glow">+ Registrar venta</a>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-3">
+  <div class="col-3">
+    <div class="stat-card">
+      <div class="sc-icon" style="background:rgba(16,185,129,.15)">💰</div>
+      <div class="sc-val">${{ stats.total_mes }}</div>
+      <div class="sc-lbl">Total este mes</div>
+      <div class="sc-trend" style="color:var(--green)">↑ {{ stats.variacion }}% vs mes anterior</div>
+    </div>
+  </div>
+  <div class="col-3">
+    <div class="stat-card">
+      <div class="sc-icon" style="background:rgba(59,130,246,.15)">🛒</div>
+      <div class="sc-val">{{ stats.cantidad_ventas }}</div>
+      <div class="sc-lbl">Pedidos del mes</div>
+    </div>
+  </div>
+  <div class="col-3">
+    <div class="stat-card">
+      <div class="sc-icon" style="background:rgba(139,92,246,.15)">📊</div>
+      <div class="sc-val">${{ stats.ticket_promedio }}</div>
+      <div class="sc-lbl">Ticket promedio</div>
+    </div>
+  </div>
+  <div class="col-3">
+    <div class="stat-card">
+      <div class="sc-icon" style="background:rgba(245,158,11,.15)">🔗</div>
+      <div class="sc-val">${{ stats.ventas_afiliados }}</div>
+      <div class="sc-lbl">Via afiliados</div>
+    </div>
+  </div>
+</div>
+
+<!-- Filtros -->
+<form method="GET" action="{{ url_for('ecommerce.ventas') }}">
+  <div class="filter-bar mb-3">
+    <input class="dark-input" type="date" name="desde" value="{{ request.args.get('desde','') }}">
+    <input class="dark-input" type="date" name="hasta" value="{{ request.args.get('hasta','') }}">
+
+    <select class="dark-input" name="estado">
+      <option value="">Todos los estados</option>
+      <option value="pendiente" {{ 'selected' if request.args.get('estado')=='pendiente' }}>Pendiente</option>
+      <option value="confirmado" {{ 'selected' if request.args.get('estado')=='confirmado' }}>Confirmado</option>
+      <option value="enviado" {{ 'selected' if request.args.get('estado')=='enviado' }}>Enviado</option>
+      <option value="entregado" {{ 'selected' if request.args.get('estado')=='entregado' }}>Entregado</option>
+      <option value="cancelado" {{ 'selected' if request.args.get('estado')=='cancelado' }}>Cancelado</option>
+    </select>
+
+    <select class="dark-input" name="origen">
+      <option value="">Todo origen</option>
+      <option value="directo" {{ 'selected' if request.args.get('origen')=='directo' }}>Directo</option>
+      <option value="afiliado" {{ 'selected' if request.args.get('origen')=='afiliado' }}>Afiliado</option>
+    </select>
+
+    <button type="submit" class="btn-glow btn-primary-glow">Filtrar</button>
+    <a href="{{ url_for('ecommerce.ventas') }}" class="btn-glow btn-ghost">Limpiar</a>
+  </div>
+</form>
+
+<!-- Tabla -->
+<div class="glow-card">
+  <table class="dark-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Cliente</th>
+        <th>Producto(s)</th>
+        <th>Origen</th>
+        <th>Total</th>
+        <th>Estado</th>
+        <th>Fecha</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in ventas %}
+      <tr>
+        <td style="color:var(--text3);font-size:11px">#{{ v.id }}</td>
+        <td>
+          <div style="font-weight:500;color:var(--text1)">{{ v.cliente_nombre }}</div>
+          <div style="font-size:10px;color:var(--text3)">{{ v.cliente_email }}</div>
+        </td>
+        <td style="color:var(--text2);font-size:11px">{{ v.resumen_productos }}</td>
+        <td>
+          {% if v.codigo_afiliado %}
+          <span class="badge-glow badge-violet">🔗 {{ v.codigo_afiliado }}</span>
+          {% else %}
+          <span class="badge-glow badge-blue">Directo</span>
+          {% endif %}
+        </td>
+        <td style="color:var(--green);font-weight:600">${{ v.total }}</td>
+        <td>
+          {% set colores = {'pendiente':'badge-amber','confirmado':'badge-blue','enviado':'badge-cyan','entregado':'badge-green','cancelado':'badge-red'} %}
+          <span class="badge-glow {{ colores.get(v.estado, 'badge-blue') }}">{{ v.estado|capitalize }}</span>
+        </td>
+        <td style="color:var(--text3);font-size:11px">{{ v.fecha }}</td>
+        <td>
+          <a href="{{ url_for('ecommerce.detalle_venta', id=v.id) }}" class="btn-glow btn-cyan-glow" style="font-size:10px;padding:3px 9px">Ver detalle</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="8" style="text-align:center;color:var(--text3);padding:24px">Sin ventas registradas.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Paginación -->
+{% if pagination %}
+<div style="display:flex;justify-content:center;gap:6px;margin-top:16px">
+  {% for p in pagination.iter_pages() %}
+    {% if p %}
+    <a href="?page={{ p }}" class="btn-glow {% if p == pagination.page %}btn-primary-glow{% else %}btn-ghost{% endif %}" style="padding:5px 12px;font-size:12px">{{ p }}</a>
+    {% endif %}
+  {% endfor %}
+</div>
+{% endif %}
+
+{% endblock %}

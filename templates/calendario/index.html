@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+{% block title %}Calendario{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Calendario Anual {{ anio }}</div>
+      <div class="page-subtitle">Eventos y fechas clave por mes</div>
+    </div>
+    <button onclick="document.getElementById('modal-nuevo').style.display='flex'" class="btn-glow btn-primary-glow">+ Nuevo evento</button>
+  </div>
+
+  <div class="glow-card" style="margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div class="section-label" style="margin-bottom:0">Eventos destacados del año</div>
+      <button onclick="document.getElementById('modal-destacado').style.display='flex'"
+              style="background:none;border:1px solid rgba(99,102,241,.3);color:var(--text2);border-radius:8px;padding:3px 10px;font-size:11px;cursor:pointer">+ Agregar</button>
+    </div>
+    {% if destacados %}
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        {% for d in destacados %}
+          {% set bg = d.color or '#6366f1' %}
+          <div style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;background:{{ bg }}22;border:1px solid {{ bg }}55">
+            <span style="width:8px;height:8px;border-radius:50%;background:{{ bg }};flex-shrink:0;display:inline-block"></span>
+            <span style="font-size:11px;font-weight:500;color:{{ bg }}">{{ d.nombre }}</span>
+            <button onclick="abrirEliminarDestacado({{ d.id }}, '{{ d.nombre }}')"
+                    style="background:none;border:none;cursor:pointer;color:{{ bg }};opacity:.6;font-size:11px;padding:0;line-height:1">✕</button>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div style="font-size:11px;color:var(--text3)">Sin eventos destacados este año.</div>
+    {% endif %}
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px">
+    {% set nombres_mes = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'] %}
+    {% for num in range(1,13) %}
+      {% set c = namespace(n=0) %}
+      {% for e in eventos %}
+        {% if e.fecha and e.fecha.month == num %}{% set c.n = c.n + 1 %}{% endif %}
+      {% endfor %}
+      <a href="{{ url_for('calendario.mes', mes=num, anio=anio) }}" class="glow-card" style="text-align:center;text-decoration:none;cursor:pointer">
+        <div style="font-size:20px;margin-bottom:6px">📅</div>
+        <div style="font-size:12px;font-weight:600;color:var(--text1)">{{ nombres_mes[num] }}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:2px">{{ c.n }} evento{{ 's' if c.n != 1 }}</div>
+      </a>
+    {% endfor %}
+  </div>
+</div>
+
+<div id="modal-nuevo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center">
+  <div class="glow-card" style="width:440px;max-width:92vw">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <span style="font-size:14px;font-weight:600;color:var(--text1)">Nuevo evento</span>
+      <button onclick="document.getElementById('modal-nuevo').style.display='none'" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px">✕</button>
+    </div>
+    <form method="POST" action="{{ url_for('calendario.nuevo') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div style="margin-bottom:10px">
+        <label class="form-label">Nombre del evento</label>
+        <input class="dark-input" type="text" name="nombre" required>
+      </div>
+      <div style="margin-bottom:10px">
+        <label class="form-label">Fecha</label>
+        <input class="dark-input" type="date" name="fecha" required>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div>
+          <label class="form-label">Tipo</label>
+          <select class="dark-input" name="tipo" required>
+            <option value="fecha_clave">Fecha clave</option>
+            <option value="campana">Campaña</option>
+            <option value="feriado">Feriado</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Campaña (opcional)</label>
+          <select class="dark-input" name="campana_id">
+            <option value="">— ninguna —</option>
+            {% for c in campanas %}
+            <option value="{{ c.id }}">{{ c.nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:16px">
+        <label class="form-label">Acción sugerida (opcional)</label>
+        <input class="dark-input" type="text" name="accion_sugerida">
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button type="button" onclick="document.getElementById('modal-nuevo').style.display='none'" class="btn-glow btn-ghost">Cancelar</button>
+        <button type="submit" class="btn-glow btn-primary-glow">Guardar evento</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="modal-destacado" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center">
+  <div class="glow-card" style="width:400px;max-width:92vw">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <span style="font-size:14px;font-weight:600;color:var(--text1)">Nuevo evento destacado</span>
+      <button onclick="document.getElementById('modal-destacado').style.display='none'" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px">✕</button>
+    </div>
+    <form method="POST" action="{{ url_for('calendario.nuevo') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="destacado" value="1">
+      <div style="margin-bottom:10px">
+        <label class="form-label">Nombre</label>
+        <input class="dark-input" type="text" name="nombre" required>
+      </div>
+      <div style="margin-bottom:10px">
+        <label class="form-label">Fecha</label>
+        <input class="dark-input" type="date" name="fecha" required>
+      </div>
+      <div style="margin-bottom:10px">
+        <label class="form-label">Tipo</label>
+        <select class="dark-input" name="tipo" required>
+          <option value="fecha_clave">Fecha clave</option>
+          <option value="campana">Campaña</option>
+          <option value="feriado">Feriado</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+      <div style="margin-bottom:16px">
+        <label class="form-label">Color del chip</label>
+        <input class="dark-input" type="color" name="color" value="#6366f1">
+      </div>
+      <input type="hidden" name="accion_sugerida" value="">
+      <input type="hidden" name="campana_id" value="">
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button type="button" onclick="document.getElementById('modal-destacado').style.display='none'" class="btn-glow btn-ghost">Cancelar</button>
+        <button type="submit" class="btn-glow btn-primary-glow">Agregar destacado</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="modal-elim-destacado" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center">
+  <div class="glow-card" style="width:360px;max-width:92vw;text-align:center">
+    <div style="font-size:32px;margin-bottom:10px">🗑️</div>
+    <div style="font-size:14px;font-weight:600;color:var(--text1);margin-bottom:8px">¿Eliminar destacado?</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:20px">
+      Vas a eliminar <strong id="elim-dest-nombre" style="color:var(--text1)"></strong>.
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button onclick="document.getElementById('modal-elim-destacado').style.display='none'" class="btn-glow btn-ghost">Cancelar</button>
+      <a id="elim-dest-link" href="#" class="btn-glow btn-danger-glow">Sí, eliminar</a>
+    </div>
+  </div>
+</div>
+
+<script>
+function abrirEliminarDestacado(id, nombre) {
+  document.getElementById('elim-dest-nombre').textContent = nombre;
+  document.getElementById('elim-dest-link').href = '/calendario/eliminar/' + id;
+  document.getElementById('modal-elim-destacado').style.display = 'flex';
+}
+</script>
+{% endblock %}

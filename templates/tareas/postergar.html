@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Postergar Tarea{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Postergar tarea</div>
+      <div class="page-subtitle">{{ tarea.titulo }}</div>
+    </div>
+    <a href="{{ url_for('tareas.index') }}" class="btn-glow btn-ghost">← Volver</a>
+  </div>
+
+  <div class="glow-card" style="max-width:480px">
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div style="margin-bottom:12px">
+        <label class="form-label">Nueva fecha de entrega *</label>
+        <input class="dark-input" type="date" name="nueva_fecha" required>
+      </div>
+      <div style="margin-bottom:18px">
+        <label class="form-label">Motivo (obligatorio) *</label>
+        <textarea class="dark-input" name="motivo" style="min-height:70px;resize:vertical" required placeholder="¿Por qué se posterga?"></textarea>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <a href="{{ url_for('tareas.index') }}" class="btn-glow btn-ghost">Cancelar</a>
+        <button type="submit" class="btn-glow btn-warn-glow">Confirmar postergación</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

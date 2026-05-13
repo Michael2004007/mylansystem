@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% block title %}Colaboración — {{ influencer.nombre }}{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Colaboración</div>
+      <div class="page-subtitle">{{ influencer.nombre }} · {{ influencer.handle or '' }}</div>
+    </div>
+    <a href="{{ url_for('influencers.index') }}" class="btn-glow btn-ghost">← Volver</a>
+  </div>
+
+  <div class="glow-card" style="max-width:600px">
+    <div style="margin-bottom:16px">
+      <label class="form-label">Tipo de colaboración</label>
+      <div style="display:flex;gap:6px;margin-top:4px">
+        <button type="button" id="btn-tipo-normal" class="btn-glow btn-primary-glow"
+                style="font-size:11px" onclick="setTipo('normal')">Campaña / contenido</button>
+        <button type="button" id="btn-tipo-ecom" class="btn-glow btn-ghost"
+                style="font-size:11px" onclick="setTipo('ecom')">◆ Ecommerce</button>
+      </div>
+    </div>
+
+    <form method="POST" id="form-normal">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="tipo" value="normal">
+
+      <div style="margin-bottom:12px">
+        <label class="form-label">Detalle de la colaboración *</label>
+        <textarea class="dark-input" name="detalle" style="min-height:60px;resize:vertical" required></textarea>
+      </div>
+
+      <div class="form-grid" style="margin-bottom:12px">
+        <div>
+          <label class="form-label">Campaña</label>
+          <select class="dark-input" name="campana_id">
+            <option value="">Sin campaña</option>
+            {% for c in campanas %}
+            <option value="{{ c.id }}">{{ c.nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Fecha entrega contenido</label>
+          <input class="dark-input" type="date" name="fecha_entrega">
+        </div>
+      </div>
+
+      <div class="form-grid" style="margin-bottom:12px">
+        <div>
+          <label class="form-label">Tipo de pago</label>
+          <select class="dark-input" name="tipo_pago" id="tipo-pago" onchange="togglePermuta()">
+            <option value="efectivo">Efectivo</option>
+            <option value="permuta">Permuta</option>
+          </select>
+        </div>
+        <div id="monto-field">
+          <label class="form-label">Monto ($)</label>
+          <input class="dark-input" type="number" name="monto" id="inp-monto" step="0.01" min="0">
+        </div>
+      </div>
+
+      <div id="permuta-section" style="display:none;margin-bottom:12px">
+        <label class="form-label">Detalle de la permuta *</label>
+        <textarea class="dark-input" name="permuta_tag" style="min-height:54px;resize:vertical"></textarea>
+      </div>
+
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <a href="{{ url_for('influencers.index') }}" class="btn-glow btn-ghost">Cancelar</a>
+        <button type="submit" class="btn-glow btn-primary-glow">Confirmar colaboración</button>
+      </div>
+    </form>
+
+    <form method="POST" id="form-ecom" style="display:none">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="tipo" value="ecommerce">
+      <input type="hidden" name="campana_id" value="">
+
+      <div class="form-grid" style="margin-bottom:12px">
+        <div>
+          <label class="form-label">Código promocional *</label>
+          <input class="dark-input" type="text" name="codigo_promo" required>
+        </div>
+        <div>
+          <label class="form-label">% comisión por venta</label>
+          <input class="dark-input" type="number" name="pct_comision" step="0.1" min="0" max="100">
+        </div>
+      </div>
+
+      <div class="form-grid" style="margin-bottom:12px">
+        <div>
+          <label class="form-label">% descuento para seguidores</label>
+          <input class="dark-input" type="number" name="pct_descuento" step="0.1" min="0" max="100">
+        </div>
+        <div></div>
+      </div>
+
+      <div style="margin-bottom:12px">
+        <label class="form-label">Nota del acuerdo</label>
+        <textarea class="dark-input" name="detalle" style="min-height:54px;resize:vertical"></textarea>
+      </div>
+
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <a href="{{ url_for('influencers.index') }}" class="btn-glow btn-ghost">Cancelar</a>
+        <button type="submit" class="btn-glow btn-primary-glow">Agregar a Ecommerce</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function setTipo(tipo) {
+  document.getElementById('form-normal').style.display = tipo === 'normal' ? 'block' : 'none';
+  document.getElementById('form-ecom').style.display   = tipo === 'ecom'   ? 'block' : 'none';
+  document.getElementById('btn-tipo-normal').className = tipo === 'normal' ? 'btn-glow btn-primary-glow' : 'btn-glow btn-ghost';
+  document.getElementById('btn-tipo-ecom').className   = tipo === 'ecom'   ? 'btn-glow btn-primary-glow' : 'btn-glow btn-ghost';
+}
+function togglePermuta() {
+  var esPermuta = document.getElementById('tipo-pago').value === 'permuta';
+  document.getElementById('permuta-section').style.display = esPermuta ? 'block' : 'none';
+  document.getElementById('inp-monto').disabled = esPermuta;
+  if (esPermuta) document.getElementById('inp-monto').value = '';
+}
+</script>
+{% endblock %}

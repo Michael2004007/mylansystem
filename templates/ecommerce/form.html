@@ -1,0 +1,129 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="topbar">
+  <div>
+    <div class="page-title">{% if producto %}Editar producto{% else %}Nuevo producto{% endif %}</div>
+    <div class="page-subtitle">Ecommerce → Productos</div>
+  </div>
+  <a href="{{ url_for('ecommerce.index') }}" class="btn-glow btn-ghost">← Volver</a>
+</div>
+
+<div class="row g-3">
+  <div class="col-8">
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="glow-card mb-3">
+        <div class="section-label mb-3">Información general</div>
+        <div class="row g-3">
+          <div class="col-8">
+            <label class="section-label">Nombre del producto</label>
+            <input class="dark-input" type="text" name="nombre" value="{{ producto.nombre if producto else '' }}" required placeholder="Ej: Camiseta MYLAN Premium">
+          </div>
+          <div class="col-4">
+            <label class="section-label">SKU</label>
+            <input class="dark-input" type="text" name="sku" value="{{ producto.sku if producto else '' }}" placeholder="MYL-001">
+          </div>
+          <div class="col-12">
+            <label class="section-label">Descripción</label>
+            <textarea class="dark-input" name="descripcion" rows="3" placeholder="Descripción del producto...">{{ producto.descripcion if producto else '' }}</textarea>
+          </div>
+          <div class="col-6">
+            <label class="section-label">Categoría</label>
+            <select class="dark-input" name="categoria">
+              {% for cat in categorias %}
+              <option value="{{ cat }}" {% if producto and producto.categoria==cat %}selected{% endif %}>{{ cat }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-6">
+            <label class="section-label">Estado</label>
+            <select class="dark-input" name="activo">
+              <option value="1" {% if not producto or producto.activo %}selected{% endif %}>Activo</option>
+              <option value="0" {% if producto and not producto.activo %}selected{% endif %}>Inactivo</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="glow-card mb-3">
+        <div class="section-label mb-3">Precios y stock</div>
+        <div class="row g-3">
+          <div class="col-4">
+            <label class="section-label">Precio venta ($)</label>
+            <input class="dark-input" type="number" step="0.01" name="precio" value="{{ producto.precio if producto else '' }}" required placeholder="0.00">
+          </div>
+          <div class="col-4">
+            <label class="section-label">Costo ($)</label>
+            <input class="dark-input" type="number" step="0.01" name="costo" value="{{ producto.costo if producto else '' }}" placeholder="0.00">
+          </div>
+          <div class="col-4">
+            <label class="section-label">Stock actual</label>
+            <input class="dark-input" type="number" name="stock" value="{{ producto.stock if producto else '0' }}" required>
+          </div>
+          <div class="col-4">
+            <label class="section-label">Stock mínimo (alerta)</label>
+            <input class="dark-input" type="number" name="stock_minimo" value="{{ producto.stock_minimo if producto else '5' }}">
+          </div>
+          <div class="col-4">
+            <label class="section-label">Unidad</label>
+            <select class="dark-input" name="unidad">
+              <option value="unidad">Unidad</option>
+              <option value="kg">Kg</option>
+              <option value="litro">Litro</option>
+              <option value="caja">Caja</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="glow-card mb-3">
+        <div class="section-label mb-3">Ecommerce / Afiliados</div>
+        <div class="row g-3">
+          <div class="col-6">
+            <label class="section-label">URL del producto (tienda)</label>
+            <input class="dark-input" type="url" name="url_tienda" value="{{ producto.url_tienda if producto else '' }}" placeholder="https://...">
+          </div>
+          <div class="col-6">
+            <label class="section-label">Comisión afiliado (%)</label>
+            <input class="dark-input" type="number" step="0.1" name="comision_pct" value="{{ producto.comision_pct if producto else '10' }}">
+          </div>
+          <div class="col-12">
+            <label class="section-label">Imagen URL</label>
+            <input class="dark-input" type="url" name="imagen_url" value="{{ producto.imagen_url if producto else '' }}" placeholder="https://...">
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <a href="{{ url_for('ecommerce.index') }}" class="btn-glow btn-ghost">Cancelar</a>
+        <button type="submit" class="btn-glow btn-primary-glow">
+          {% if producto %}💾 Guardar cambios{% else %}✅ Crear producto{% endif %}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Panel lateral -->
+  <div class="col-4">
+    <div class="glow-card mb-3">
+      <div class="section-label mb-2">Vista previa</div>
+      {% if producto and producto.imagen_url %}
+      <img src="{{ producto.imagen_url }}" style="width:100%;border-radius:10px;object-fit:cover;max-height:160px">
+      {% else %}
+      <div style="width:100%;height:120px;background:var(--dk-card2);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:12px">Sin imagen</div>
+      {% endif %}
+    </div>
+    {% if producto %}
+    <div class="glow-card">
+      <div class="section-label mb-2">Estadísticas</div>
+      <div style="font-size:12px;color:var(--text2)">Total vendidos: <strong style="color:var(--text1)">{{ producto.total_vendidos }}</strong></div>
+      <div style="font-size:12px;color:var(--text2);margin-top:6px">Ingresos: <strong style="color:var(--green)">${{ producto.ingresos_total }}</strong></div>
+      <div style="font-size:12px;color:var(--text2);margin-top:6px">Creado: <strong style="color:var(--text1)">{{ producto.fecha_creacion }}</strong></div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

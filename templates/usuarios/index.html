@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}Usuarios{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Usuarios del sistema</div>
+      <div class="page-subtitle">Gestión de usuarios y permisos</div>
+    </div>
+    <a href="{{ url_for('usuarios.nuevo') }}" class="btn-glow btn-primary-glow">+ Nuevo usuario</a>
+  </div>
+
+  {% if usuarios %}
+  <div class="glow-card">
+    <table class="dark-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th>Rol</th>
+          <th>Estado</th>
+          <th>Fecha registro</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in usuarios %}
+        <tr>
+          <td style="color:var(--text1);font-weight:500">{{ u.nombre }}</td>
+          <td style="color:var(--text2)">{{ u.email }}</td>
+          <td>
+            {% if u.rol == 'admin' %}
+              <span class="badge-violet">👑 Administrador</span>
+            {% else %}
+              <span class="badge-blue">👤 Usuario</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if u.activo %}
+              <span class="badge-green">✓ Activo</span>
+            {% else %}
+              <span class="badge-red">✕ Inactivo</span>
+            {% endif %}
+          </td>
+          <td style="color:var(--text3);font-size:11px">
+            {{ u.created_at.strftime('%d/%m/%Y') if u.created_at else '—' }}
+          </td>
+          <td>
+            <div style="display:flex;gap:6px">
+              <a href="{{ url_for('usuarios.editar', id=u.id) }}" 
+                 class="btn-glow btn-cyan-glow" style="font-size:11px;padding:4px 10px">✏ Editar</a>
+              {% if current_user.id != u.id %}
+              <button class="btn-glow btn-danger-glow btn-confirm" 
+                      style="font-size:11px;padding:4px 10px;cursor:pointer;border:none"
+                      data-type="danger"
+                      data-icon="✕"
+                      data-title="Eliminar usuario"
+                      data-text="¿Eliminar a &lt;strong&gt;{{ u.nombre|e }}&lt;/strong&gt;? Esta acción no se puede deshacer."
+                      data-confirm="Sí, eliminar"
+                      data-url="{{ url_for('usuarios.eliminar', id=u.id) }}">✕</button>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="glow-card" style="text-align:center;color:var(--text3);padding:32px">
+    No hay usuarios registrados.
+  </div>
+  {% endif %}
+</div>
+
+<script>
+document.addEventListener('click', function(e){
+  var btn = e.target.closest('.btn-confirm');
+  if(!btn) return;
+  confirmAction({
+    type:        btn.dataset.type,
+    icon:        btn.dataset.icon,
+    title:       btn.dataset.title,
+    text:        btn.dataset.text,
+    confirmText: btn.dataset.confirm,
+    url:         btn.dataset.url
+  });
+});
+</script>
+{% endblock %}

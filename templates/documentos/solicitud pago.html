@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Solicitud de Pago{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Solicitud de Pago</div>
+      <div class="page-subtitle">Completá los datos y generá el PDF</div>
+    </div>
+  </div>
+
+  <div class="glow-card" style="max-width:700px">
+    <div style="text-align:center;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--dk-border)">
+      <div style="font-size:16px;font-weight:700;background:linear-gradient(135deg,var(--blue2),var(--violet2));-webkit-background-clip:text;-webkit-text-fill-color:transparent">MYLAN</div>
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em">Solicitud de Pago</div>
+    </div>
+
+    <form method="POST">
+      <div class="form-grid" style="margin-bottom:12px">
+        <div><label class="form-label">Nº Solicitud</label><input class="dark-input" name="numero" placeholder="SP-0001"></div>
+        <div><label class="form-label">Fecha</label><input class="dark-input" type="date" name="fecha"></div>
+      </div>
+      <div class="form-grid" style="margin-bottom:12px">
+        <div><label class="form-label">Beneficiario</label><input class="dark-input" name="beneficiario"></div>
+        <div><label class="form-label">RUC / CI</label><input class="dark-input" name="ruc"></div>
+      </div>
+      <div class="form-grid" style="margin-bottom:12px">
+        <div><label class="form-label">Concepto</label><input class="dark-input" name="concepto"></div>
+        <div><label class="form-label">Monto ($)</label><input class="dark-input" type="number" name="monto" step="0.01"></div>
+      </div>
+      <div class="form-grid" style="margin-bottom:12px">
+        <div><label class="form-label">Método de pago</label>
+          <select class="dark-input" name="metodo"><option>Transferencia</option><option>Efectivo</option><option>Cheque</option><option>Permuta</option></select>
+        </div>
+        <div><label class="form-label">Banco / Cuenta</label><input class="dark-input" name="banco"></div>
+      </div>
+      <div style="margin-bottom:18px">
+        <label class="form-label">Observaciones</label>
+        <textarea class="dark-input" name="observaciones" style="min-height:60px;resize:vertical"></textarea>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button type="submit" class="btn-glow btn-primary-glow">Generar PDF</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}{% if campana %}Editar campaña{% else %}Nueva campaña{% endif %}{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="topbar">
+    <div>
+      <div class="page-title">{% if campana %}Editar campaña{% else %}Nueva campaña{% endif %}</div>
+      <div class="page-subtitle">{% if campana %}Modificá los datos de la campaña{% else %}Completá los datos para crear una campaña{% endif %}</div>
+    </div>
+    <a href="{{ url_for('campanas.index') }}" class="btn-glow btn-ghost">← Volver</a>
+  </div>
+
+  <div class="glow-card" style="max-width:560px">
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div style="margin-bottom:12px">
+        <label class="form-label">Nombre de la campaña</label>
+        <input class="dark-input" type="text" name="nombre" required
+               value="{{ campana.nombre if campana else '' }}" placeholder="Ej: Campaña Día de las Madres">
+      </div>
+
+      <div class="form-grid" style="margin-bottom:12px">
+        <div>
+          <label class="form-label">Fecha de inicio</label>
+          <input class="dark-input" type="date" name="fecha_inicio"
+                 value="{{ campana.fecha_inicio.strftime('%Y-%m-%d') if campana and campana.fecha_inicio and campana.fecha_inicio is not string else (campana.fecha_inicio if campana and campana.fecha_inicio else '') }}">
+        </div>
+        <div>
+          <label class="form-label">Fecha de fin</label>
+          <input class="dark-input" type="date" name="fecha_fin"
+                 value="{{ campana.fecha_fin.strftime('%Y-%m-%d') if campana and campana.fecha_fin and campana.fecha_fin is not string else (campana.fecha_fin if campana and campana.fecha_fin else '') }}">
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px">
+        <label class="form-label">Presupuesto ($)</label>
+        <input class="dark-input" type="number" name="presupuesto" step="0.01" min="0" required
+               value="{{ campana.presupuesto if campana else '' }}" placeholder="0.00">
+      </div>
+
+      <div style="margin-bottom:20px">
+        <label class="form-label">Descripción <span style="color:var(--text3);font-weight:400">(opcional)</span></label>
+        <textarea class="dark-input" name="descripcion" rows="3" placeholder="Objetivo, canales, notas..."
+                  style="resize:vertical">{{ campana.descripcion if campana and campana.descripcion else '' }}</textarea>
+      </div>
+
+      <div style="display:flex;gap:8px">
+        <button type="submit" class="btn-glow btn-primary-glow">
+          {% if campana %}Guardar cambios{% else %}Crear campaña{% endif %}
+        </button>
+        <a href="{{ url_for('campanas.index') }}" class="btn-glow btn-ghost">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

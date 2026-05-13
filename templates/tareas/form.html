@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block title %}{% if tarea %}Editar tarea{% else %}Nueva tarea{% endif %}{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="topbar">
+    <div>
+      <div class="page-title">{% if tarea %}Editar tarea{% else %}Nueva tarea{% endif %}</div>
+      <div class="page-subtitle">Completá los datos de la tarea</div>
+    </div>
+    <a href="{{ url_for('tareas.index') }}" class="btn-glow btn-ghost">← Volver</a>
+  </div>
+
+  <div class="glow-card" style="max-width:620px">
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div style="margin-bottom:12px">
+        <label class="form-label">Título *</label>
+        <input class="dark-input" type="text" name="titulo" required value="{{ tarea.titulo if tarea else '' }}">
+      </div>
+
+      <div class="form-grid" style="margin-bottom:12px">
+        {% if current_user.es_admin() %}
+        <div>
+          <label class="form-label">Asignado a</label>
+          <select class="dark-input" name="usuario_id">
+            <option value="">Sin asignar</option>
+            {% for u in usuarios %}
+            <option value="{{ u.id }}" {% if tarea and tarea.usuario_id == u.id %}selected{% endif %}>
+              {{ u.nombre }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endif %}
+
+        <div>
+          <label class="form-label">Fecha entrega *</label>
+          <input class="dark-input" type="date" name="fecha_entrega" required
+                 value="{{ tarea.fecha_entrega if tarea else '' }}">
+        </div>
+
+        <div>
+          <label class="form-label">Prioridad *</label>
+          <select class="dark-input" name="prioridad" required>
+            <option value="alta" {% if tarea and tarea.prioridad=='alta' %}selected{% endif %}>🔴 Alta</option>
+            <option value="media" {% if tarea and tarea.prioridad=='media' %}selected{% endif %}>🟡 Media</option>
+            <option value="baja" {% if tarea and tarea.prioridad=='baja' %}selected{% endif %}>🟢 Baja</option>
+          </select>
+        </div>
+      </div>
+
+      {% if tarea %}
+      <div style="margin-bottom:12px">
+        <label class="form-label">Estado</label>
+        <select class="dark-input" name="estado">
+          <option value="pendiente" {% if tarea.estado=='pendiente' %}selected{% endif %}>⏳ Pendiente</option>
+          <option value="en_proceso" {% if tarea.estado=='en_proceso' %}selected{% endif %}>⚙️ En proceso</option>
+          <option value="completada" {% if tarea.estado=='completada' %}selected{% endif %}>✅ Completada</option>
+          <option value="postergada" {% if tarea.estado=='postergada' %}selected{% endif %}>🔄 Postergada</option>
+        </select>
+      </div>
+      {% endif %}
+
+      <div style="margin-bottom:12px">
+        <label class="form-label">Campaña (opcional)</label>
+        <select class="dark-input" name="campana_id">
+          <option value="">— Ninguna —</option>
+          {% for c in campanas %}
+            <option value="{{ c.id }}" {% if tarea and tarea.campana_id==c.id %}selected{% endif %}>{{ c.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div style="margin-bottom:18px">
+        <label class="form-label">Descripción (opcional)</label>
+        <textarea class="dark-input" name="descripcion" rows="3" placeholder="Detalles adicionales de la tarea...">{{ tarea.descripcion if tarea else '' }}</textarea>
+      </div>
+
+      <div style="display:flex;gap:8px">
+        <button type="submit" class="btn-glow btn-primary-glow">
+          {% if tarea %}Guardar cambios{% else %}Crear tarea{% endif %}
+        </button>
+        <a href="{{ url_for('tareas.index') }}" class="btn-glow btn-ghost">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

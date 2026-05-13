@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %}Campañas{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Campañas</div>
+      <div class="page-subtitle">Presupuesto y seguimiento por campaña</div>
+    </div>
+    <a href="{{ url_for('campanas.nueva') }}" class="btn-glow btn-primary-glow">+ Nueva campaña</a>
+  </div>
+
+  {% if campanas %}
+  {% for c in campanas %}
+  {% set pct = ((c.gastado / c.presupuesto * 100) | round | int) if c.presupuesto > 0 else 0 %}
+  {% set pct = [pct, 100] | min %}
+  <div class="glow-card" style="margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <a href="{{ url_for('campanas.detalle', id=c.id) }}"
+             style="font-size:14px;font-weight:600;color:var(--text1);text-decoration:none">
+            {{ c.nombre }}
+          </a>
+          {% if c.status == 'completada' %}
+            <span class="badge-green">Completada</span>
+          {% else %}
+            <span class="badge-blue">Activa</span>
+          {% endif %}
+        </div>
+        <div style="font-size:10px;color:var(--text3);margin:3px 0">
+          {% if c.fecha_inicio and c.fecha_fin %}
+            {{ c.fecha_inicio.strftime('%d/%m/%Y') if c.fecha_inicio is not string else c.fecha_inicio }}
+            →
+            {{ c.fecha_fin.strftime('%d/%m/%Y') if c.fecha_fin is not string else c.fecha_fin }}
+            ·
+          {% endif %}
+          Presupuesto: <span style="color:var(--blue2);font-weight:600">${{ '{:,.0f}'.format(c.presupuesto) }}</span>
+        </div>
+        {% if c.descripcion %}
+        <div style="font-size:11px;color:var(--text2);margin-top:3px">{{ c.descripcion }}</div>
+        {% endif %}
+      </div>
+      <div style="display:flex;gap:5px;flex-shrink:0">
+        {% if c.status != 'completada' %}
+        <button class="btn-glow btn-success-glow btn-confirm" style="font-size:10px;padding:4px 10px;cursor:pointer;border:none"
+          data-type="success"
+          data-icon="✓"
+          data-title="Marcar como completada"
+          data-text="¿Confirmas que la campaña &lt;strong&gt;{{ c.nombre|e }}&lt;/strong&gt; fue completada?"
+          data-confirm="Sí, completar"
+          data-url="{{ url_for('campanas.completar', id=c.id) }}">✓ Hecho</button>
+        {% endif %}
+        <a href="{{ url_for('campanas.editar', id=c.id) }}" class="btn-glow btn-ghost" style="font-size:10px;padding:4px 10px">Editar</a>
+        <button class="btn-glow btn-danger-glow btn-confirm" style="font-size:10px;padding:4px 10px;cursor:pointer;border:none"
+          data-type="danger"
+          data-icon="✕"
+          data-title="Eliminar campaña"
+          data-text="Esta acción es permanente. ¿Eliminar &lt;strong&gt;{{ c.nombre|e }}&lt;/strong&gt;?"
+          data-confirm="Sí, eliminar"
+          data-url="{{ url_for('campanas.eliminar', id=c.id) }}">✕</button>
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-bottom:4px">
+        <span>Gastado: <span style="color:var(--amber)">${{ '{:,.0f}'.format(c.gastado) }}</span></span>
+        <span style="color:var(--blue2);font-weight:600">{{ pct }}%</span>
+      </div>
+      <div class="progress-dark">
+        <div class="progress-fill {% if pct >= 80 %}progress-amber{% else %}progress-green{% endif %}" style="width:{{ pct }}%"></div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <div class="glow-card" style="text-align:center;color:var(--text3);padding:32px">
+    No hay campañas registradas. Creá la primera.
+  </div>
+  {% endif %}
+</div>
+
+<script>
+document.addEventListener('click', function(e){
+  var btn = e.target.closest('.btn-confirm');
+  if(!btn) return;
+  confirmAction({
+    type:        btn.dataset.type,
+    icon:        btn.dataset.icon,
+    title:       btn.dataset.title,
+    text:        btn.dataset.text,
+    confirmText: btn.dataset.confirm,
+    url:         btn.dataset.url
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}Historial de precios — {{ influencer.nombre }}{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Historial de precios</div>
+      <div class="page-subtitle">{{ influencer.nombre }} · {{ influencer.handle }}</div>
+    </div>
+    <a href="{{ url_for('influencers.index') }}" class="btn-glow btn-ghost">← Volver</a>
+  </div>
+
+  <div class="glow-card">
+    {% if colaboraciones %}
+    <table class="dark-table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Campaña</th>
+          <th>Detalle</th>
+          <th>Tipo pago</th>
+          <th>Monto</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for col in colaboraciones %}
+        <tr>
+          <td style="font-size:11px">{{ col.fecha_entrega or col.created_at }}</td>
+          <td>
+            {% if col.campana_nombre %}
+              <span class="badge-blue">{{ col.campana_nombre }}</span>
+            {% else %}
+              <span style="color:var(--text3)">—</span>
+            {% endif %}
+          </td>
+          <td style="color:var(--text1)">{{ col.detalle[:50] }}{% if col.detalle|length > 50 %}...{% endif %}</td>
+          <td>
+            {% if col.tipo_pago == 'permuta' %}
+              <span class="badge-violet">Permuta</span>
+              {% if col.permuta_tag %}
+              <div style="font-size:10px;color:var(--text3);margin-top:2px">{{ col.permuta_tag }}</div>
+              {% endif %}
+            {% else %}
+              <span class="badge-green">Efectivo</span>
+            {% endif %}
+          </td>
+          <td style="font-weight:600;color:var(--blue2)">
+            {% if col.monto %}${{ '{:,.0f}'.format(col.monto) }}{% else %}—{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    {% set total = colaboraciones | selectattr('monto') | map(attribute='monto') | sum %}
+    <div style="text-align:right;margin-top:12px;padding-top:10px;border-top:1px solid var(--dk-border)">
+      <span style="font-size:11px;color:var(--text3)">Total pagado:</span>
+      <span style="font-size:16px;font-weight:700;color:var(--blue2);margin-left:6px">${{ '{:,.0f}'.format(total) }}</span>
+    </div>
+    {% else %}
+    <div style="text-align:center;color:var(--text3);padding:24px">
+      No hay colaboraciones registradas con este influencer.
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

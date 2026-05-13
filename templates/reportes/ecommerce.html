@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% block title %}Reporte de Ecommerce{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Reporte de Ecommerce</div>
+      <div class="page-subtitle">
+        {% set meses = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'] %}
+        {{ meses[mes] }} {{ anio }}
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <a href="{{ url_for('reportes.ecommerce_pdf', mes=mes, anio=anio, meta=meta_mensual) }}" class="btn-glow btn-danger-glow">📄 Descargar PDF</a>
+      <a href="{{ url_for('reportes.ecommerce_excel', mes=mes, anio=anio, meta=meta_mensual) }}" class="btn-glow btn-success-glow">📊 Descargar Excel</a>
+      <a href="{{ url_for('reportes.index') }}" class="btn-glow btn-ghost">← Volver</a>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="glow-card" style="margin-bottom:16px">
+    <form method="GET" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;align-items:flex-end">
+      <div>
+        <label class="form-label">Mes</label>
+        <select class="dark-input" name="mes">
+          {% for n, nombre in [(1,'Enero'),(2,'Febrero'),(3,'Marzo'),(4,'Abril'),(5,'Mayo'),(6,'Junio'),(7,'Julio'),(8,'Agosto'),(9,'Septiembre'),(10,'Octubre'),(11,'Noviembre'),(12,'Diciembre')] %}
+          <option value="{{ n }}" {% if n == mes %}selected{% endif %}>{{ nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Año</label>
+        <select class="dark-input" name="anio">
+          {% for y in [2024, 2025, 2026, 2027] %}
+          <option value="{{ y }}" {% if y == anio %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Meta mensual ($)</label>
+        <input class="dark-input" type="number" name="meta" value="{{ meta_mensual }}" step="1000000" placeholder="Ej: 50000000">
+      </div>
+      <button type="submit" class="btn-glow btn-primary-glow">Filtrar</button>
+    </form>
+  </div>
+
+  <!-- Estadísticas principales -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:16px">
+
+    <!-- Meta mensual -->
+    <div class="stat-card">
+      <div class="sc-icon" style="background:rgba(139,92,246,.12);color:var(--violet2)">🎯</div>
+      <div class="sc-val">${{ '{:,.0f}'.format(meta_mensual).replace(',','.') }}</div>
+      <div class="sc-lbl">Meta del mes</div>
+    </div>
+
+    <!-- Total vendido -->
+    <div class="stat-card">
+      <div class="sc-icon" style="background:rgba(16,185,129,.12);color:var(--green)">💰</div>
+      <div class="sc-val">${{ '{:,.0f}'.format(total_ventas).replace(',','.') }}</div>
+      <div class="sc-lbl">Total vendido</div>
+    </div>
+
+    <!-- Faltante o excedente -->
+    <div class="stat-card">
+      <div class="sc-icon" style="background:{% if faltante_meta > 0 %}rgba(239,68,68,.12);color:var(--red){% else %}rgba(16,185,129,.12);color:var(--green){% endif %}">
+        {% if faltante_meta > 0 %}📉{% else %}🚀{% endif %}
+      </div>
+      <div class="sc-val" style="color:{% if faltante_meta > 0 %}var(--red){% else %}var(--green){% endif %}">
+        ${{ '{:,.0f}'.format(faltante_meta|abs).replace(',','.') }}
+      </div>
+      <div class="sc-lbl">{% if faltante_meta > 0 %}Falta para meta{% else %}Excedente{% endif %}</div>
+    </div>
+
+    <!-- % Cumplimiento -->
+    <div class="stat-card">
+      <div class="sc-icon" style="background:rgba(59,130,246,.12);color:var(--blue2)">📊</div>
+      <div class="sc-val">{{ '{:.1f}'.format(porcentaje_cumplimiento) }}%</div>
+      <div class="sc-lbl">Cumplimiento</div>
+    </div>
+
+    <!-- Cantidad ventas -->
+    <div class="stat-card">
+      <div class="sc-icon" style="background:rgba(245,158,11,.12);color:var(--amber)">🛒</div>
+      <div class="sc-val">{{ cantidad_ventas }}</div>
+      <div class="sc-lbl">Cantidad de ventas</div>
+    </div>
+
+    <!-- Ticket promedio -->
+    <div class="stat-card">
+      <div class="sc-icon" style="background:rgba(6,182,212,.12);color:var(--cyan)">📈</div>
+      <div class="sc-val">${{ '{:,.0f}'.format(ticket_promedio).replace(',','.') }}</div>
+      <div class="sc-lbl">Ticket promedio</div>
+    </div>
+
+  </div>
+
+  <!-- Métricas adicionales -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:16px">
+
+    <!-- Días activos -->
+    <div class="stat-card">
+      <div class="sc-icon" style="background:rgba(139,92,246,.12);color:var(--violet2)">📅</div>
+      <div class="sc-val">{{ dias_activos }}</div>
+      <div class="sc-lbl">Días con ventas</div>
+    </div>
+
+    <!-- Promedio diario -->
+    <div class="stat-card">
+      <div class="sc-icon" style="background:rgba(16,185,129,.12);color:var(--green)">💵</div>
+      <div class="sc-val">${{ '{:,.0f}'.format(promedio_diario).replace(',','.') }}</div>
+      <div class="sc-lbl">Promedio por día activo</div>
+    </div>
+
+  </div>
+
+  <!-- Barra de progreso visual -->
+  <div class="glow-card" style="margin-bottom:16px;padding:16px">
+    <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+      <span style="font-size:12px;color:var(--text2);font-weight:600">Progreso hacia la meta</span>
+      <span style="font-size:12px;color:var(--text1);font-weight:600">{{ '{:.1f}'.format(porcentaje_cumplimiento) }}%</span>
+    </div>
+    <div style="width:100%;height:20px;background:var(--bg2);border-radius:10px;overflow:hidden">
+      <div style="width:{{ porcentaje_cumplimiento if porcentaje_cumplimiento <= 100 else 100 }}%;height:100%;background:{% if porcentaje_cumplimiento >= 100 %}linear-gradient(90deg,#10b981,#059669){% elif porcentaje_cumplimiento >= 75 %}linear-gradient(90deg,#3b82f6,#2563eb){% elif porcentaje_cumplimiento >= 50 %}linear-gradient(90deg,#f59e0b,#d97706){% else %}linear-gradient(90deg,#ef4444,#dc2626){% endif %};transition:width 0.3s ease"></div>
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  <div class="glow-card">
+    <table class="dark-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Fecha</th>
+          <th>Influencer</th>
+          <th>Monto</th>
+          <th>Nota</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in ventas %}
+        <tr>
+          <td style="color:var(--text3)">#{{ v.id if v.id is defined else v['id'] }}</td>
+          <td style="font-size:11px;color:var(--text2)">
+            {% if v.fecha is defined %}
+              {{ v.fecha.strftime('%d/%m/%Y') if v.fecha else '—' }}
+            {% else %}
+              {{ v['fecha'].strftime('%d/%m/%Y') if v['fecha'] else '—' }}
+            {% endif %}
+          </td>
+          <td style="color:{% if (v.influencer_nombre if v.influencer_nombre is defined else v.get('influencer_nombre')) == 'Orgánico' %}var(--green){% else %}var(--blue2){% endif %}">
+            {{ (v.influencer_nombre if v.influencer_nombre is defined else v.get('influencer_nombre')) or 'Orgánico' }}
+          </td>
+          <td style="color:var(--green);font-weight:600">
+            ${{ '{:,.0f}'.format(v.monto if v.monto is defined else v['monto']).replace(',','.') }}
+          </td>
+          <td style="font-size:11px;color:var(--text3)">
+            {{ (v.nota if v.nota is defined else v.get('nota')) or '—' }}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" style="text-align:center;color:var(--text3);padding:24px">No hay ventas registradas en este periodo.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

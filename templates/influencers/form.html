@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if influencer else 'Nuevo' }} Influencer{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="topbar">
+    <div>
+      <div class="page-title">{{ 'Editar influencer' if influencer else 'Nuevo influencer' }}</div>
+      <div class="page-subtitle">Datos del influencer</div>
+    </div>
+    <a href="{{ url_for('influencers.index') }}" class="btn-glow btn-ghost">← Volver</a>
+  </div>
+
+  <div class="glow-card" style="max-width:600px">
+    <form method="POST" onsubmit="combinarWa()">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="form-grid" style="margin-bottom:12px">
+        <div>
+          <label class="form-label">Nombre *</label>
+          <input class="dark-input" type="text" name="nombre" value="{{ influencer.nombre if influencer else '' }}" required placeholder="Nombre completo">
+        </div>
+        <div>
+          <label class="form-label">Handle (@...) *</label>
+          <input class="dark-input" type="text" name="handle" value="{{ influencer.handle if influencer else '' }}" required placeholder="@usuario">
+        </div>
+      </div>
+
+      <div class="form-grid" style="margin-bottom:12px">
+        <div>
+          <label class="form-label">Link Instagram</label>
+          <input class="dark-input" type="url" name="url_ig" value="{{ influencer.url_ig if influencer else '' }}" placeholder="https://instagram.com/...">
+        </div>
+        <div>
+          <label class="form-label">WhatsApp</label>
+          <div style="display:flex;gap:6px">
+            <select id="codigo-pais" class="dark-input" style="width:auto;min-width:120px;flex-shrink:0">
+              <option value="54">🇦🇷 +54</option>
+              <option value="591">🇧🇴 +591</option>
+              <option value="55">🇧🇷 +55</option>
+              <option value="56">🇨🇱 +56</option>
+              <option value="57">🇨🇴 +57</option>
+              <option value="506">🇨🇷 +506</option>
+              <option value="53">🇨🇺 +53</option>
+              <option value="593">🇪🇨 +593</option>
+              <option value="503">🇸🇻 +503</option>
+              <option value="502">🇬🇹 +502</option>
+              <option value="504">🇭🇳 +504</option>
+              <option value="52">🇲🇽 +52</option>
+              <option value="505">🇳🇮 +505</option>
+              <option value="507">🇵🇦 +507</option>
+              <option value="595" selected>🇵🇾 +595</option>
+              <option value="51">🇵🇪 +51</option>
+              <option value="1809">🇩🇴 +1809</option>
+              <option value="598">🇺🇾 +598</option>
+              <option value="58">🇻🇪 +58</option>
+              <option value="34">🇪🇸 +34</option>
+              <option value="1">🇺🇸 +1</option>
+            </select>
+            <input class="dark-input" type="text" id="numero-wa" placeholder="981000000" style="flex:1"
+              value="{{ influencer.whatsapp | replace(influencer.whatsapp[:3], '', 1) if influencer and influencer.whatsapp and influencer.whatsapp.startswith('595') else (influencer.whatsapp if influencer else '') }}">
+          </div>
+          <input type="hidden" name="whatsapp" id="wa-final">
+        </div>
+      </div>
+
+      <div style="margin-bottom:18px">
+        <label class="form-label">Estado</label>
+        <select class="dark-input" name="estado">
+          <option value="nuevo" {% if influencer and influencer.estado=='nuevo' %}selected{% endif %}>Nuevo</option>
+          <option value="trabajaron" {% if influencer and influencer.estado=='trabajaron' %}selected{% endif %}>Ya trabajó</option>
+          <option value="sugerido" {% if influencer and influencer.estado=='sugerido' %}selected{% endif %}>Sugerido</option>
+        </select>
+      </div>
+
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <a href="{{ url_for('influencers.index') }}" class="btn-glow btn-ghost">Cancelar</a>
+        <button type="submit" class="btn-glow btn-primary-glow">{{ 'Guardar cambios' if influencer else 'Agregar influencer' }}</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  (function() {
+    {% if influencer and influencer.whatsapp %}
+    const wa = '{{ influencer.whatsapp }}';
+    const select = document.getElementById('codigo-pais');
+    const options = Array.from(select.options).sort((a, b) => b.value.length - a.value.length);
+    for (const opt of options) {
+      if (wa.startsWith(opt.value)) {
+        select.value = opt.value;
+        document.getElementById('numero-wa').value = wa.slice(opt.value.length);
+        break;
+      }
+    }
+    {% endif %}
+  })();
+
+  function combinarWa() {
+    const codigo = document.getElementById('codigo-pais').value;
+    const numero = document.getElementById('numero-wa').value.trim().replace(/^0+/, '');
+    document.getElementById('wa-final').value = numero ? codigo + numero : '';
+  }
+</script>
+{% endblock %}

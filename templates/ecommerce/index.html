@@ -1,0 +1,324 @@
+{% extends 'base.html' %}
+{% block title %}Ecommerce{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  <div class="topbar">
+    <div>
+      <div class="page-title">Ecommerce — Ventas</div>
+      <div class="page-subtitle">Ventas por influencer con códigos de afiliado</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button onclick="document.getElementById('modal-meta').style.display='flex'"
+              class="btn-glow btn-ghost">🎯 Agregar meta</button>
+      <button onclick="document.getElementById('modal-venta').style.display='flex'"
+              class="btn-glow btn-primary-glow">+ Registrar venta</button>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center">
+    <form method="GET" style="display:flex;gap:6px;align-items:center">
+      <select name="mes" class="dark-input" onchange="this.form.submit()">
+        {% for n, nombre in [(1,'Enero'),(2,'Febrero'),(3,'Marzo'),(4,'Abril'),(5,'Mayo'),(6,'Junio'),
+                             (7,'Julio'),(8,'Agosto'),(9,'Septiembre'),(10,'Octubre'),(11,'Noviembre'),(12,'Diciembre')] %}
+        <option value="{{ n }}" {% if n == mes %}selected{% endif %}>{{ nombre }}</option>
+        {% endfor %}
+      </select>
+      <select name="anio" class="dark-input" onchange="this.form.submit()">
+        {% for y in [2024, 2025, 2026, 2027] %}
+        <option value="{{ y }}" {% if y == anio %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+    </form>
+  </div>
+
+  {% set total_mes = ventas | sum(attribute='monto') %}
+  {% set meta_mes  = metas  | selectattr('mes', 'equalto', mes) | list %}
+  {% set meta_val  = meta_mes[0].meta if meta_mes else 0 %}
+  {% set pct       = ((total_mes / meta_val * 100) | round(0) | int) if meta_val > 0 else 0 %}
+  {% set pct       = [pct, 100] | min %}
+
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
+    <div class="glow-card" style="text-align:center">
+      <div style="font-size:22px;margin-bottom:4px">💰</div>
+      <div style="font-size:20px;font-weight:700;color:var(--green)">${{ '{:,.0f}'.format(total_mes).replace(',','.') }}</div>
+      <div style="font-size:11px;color:var(--text3)">Ventas este mes</div>
+    </div>
+    <div class="glow-card" style="text-align:center">
+      <div style="font-size:22px;margin-bottom:4px">🎯</div>
+      <div style="font-size:20px;font-weight:700;color:var(--blue2)">${{ '{:,.0f}'.format(meta_val).replace(',','.') }}</div>
+      <div style="font-size:11px;color:var(--text3)">Meta del mes</div>
+    </div>
+    <div class="glow-card" style="text-align:center">
+      <div style="font-size:22px;margin-bottom:4px">📊</div>
+      <div style="font-size:20px;font-weight:700;color:{% if pct >= 100 %}var(--green){% elif pct >= 70 %}var(--amber){% else %}var(--red){% endif %}">
+        {{ pct }}%
+      </div>
+      <div style="font-size:11px;color:var(--text3)">Cumplimiento</div>
+    </div>
+    <div class="glow-card" style="text-align:center">
+      <div style="font-size:22px;margin-bottom:4px">🔗</div>
+      <div style="font-size:20px;font-weight:700;color:var(--violet2)">
+        {{ ventas | selectattr('influencer_nombre', 'ne', 'Orgánico') | list | length }}
+      </div>
+      <div style="font-size:11px;color:var(--text3)">Influencers activos</div>
+    </div>
+  </div>
+
+  <div class="glow-card" style="margin-bottom:16px">
+    <div class="section-label" style="margin-bottom:10px">Ventas del mes</div>
+    <table class="dark-table">
+      <thead>
+        <tr>
+          <th>Influencer</th>
+          <th>Fecha</th>
+          <th>Monto</th>
+          <th>Nota</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in ventas %}
+        <tr>
+          <td style="color:var(--text1);font-weight:500">
+            {% if v.influencer_nombre == 'Orgánico' %}
+              <span style="color:var(--green)">🌿 Orgánico</span>
+            {% else %}
+              {{ v.influencer_nombre }}
+            {% endif %}
+          </td>
+          <td style="color:var(--text3);font-size:11px">{{ v.fecha or '—' }}</td>
+          <td style="color:var(--green);font-weight:600">${{ '{:,.0f}'.format(v.monto).replace(',','.') }}</td>
+          <td style="color:var(--text3);font-size:11px">{{ v.nota or '—' }}</td>
+          <td>
+            <div style="display:flex;gap:6px">
+              <button onclick="abrirEditar({{ v.id }}, {{ (v.influencer_id or '')|tojson }}, {{ (v.fecha or '')|tojson }}, {{ v.monto }}, {{ (v.nota or '')|tojson }})"
+                      class="btn-glow btn-ghost" style="font-size:11px;padding:4px 10px">✏ Editar</button>
+              <button type="button"
+                      onclick="confirmarEliminar({{ v.id }}, '${{ '{:,.0f}'.format(v.monto).replace(',','.') }}', '{{ v.fecha or '' }}')"
+                      class="btn-glow" style="font-size:11px;padding:4px 10px;background:rgba(255,80,80,.15);color:#f87171;border:1px solid rgba(255,80,80,.3)">
+                🗑 Eliminar
+              </button>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5" style="text-align:center;color:var(--text3);padding:24px">
+            Sin ventas registradas este mes.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="glow-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div class="section-label">Metas anuales {{ anio }}</div>
+      <button onclick="document.getElementById('modal-meta').style.display='flex'"
+              class="btn-glow btn-ghost" style="font-size:11px">⚙ Editar metas</button>
+    </div>
+    <table class="dark-table">
+      <thead>
+        <tr>
+          <th>Mes</th>
+          <th>Meta</th>
+          <th>Vendido real</th>
+          <th>Cumplimiento</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% set meses_nombres = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'] %}
+        {% for m in metas %}
+        {% set p = ((m.real / m.meta * 100) | round(1)) if m.meta > 0 else 0 %}
+        <tr>
+          <td style="color:var(--text1);font-weight:500">{{ meses_nombres[m.mes] }}</td>
+          <td style="color:var(--text2)">${{ '{:,.0f}'.format(m.meta).replace(',','.') }}</td>
+          <td style="color:{% if m.real >= m.meta %}var(--green){% else %}var(--text2){% endif %};font-weight:600">
+            ${{ '{:,.0f}'.format(m.real).replace(',','.') }}
+          </td>
+          <td style="font-weight:600;color:{% if p >= 100 %}var(--green){% elif p >= 70 %}var(--amber){% else %}var(--red){% endif %}">
+            {{ p }}%
+          </td>
+          <td>
+            {% if m.meta == 0 %}
+              <span class="badge-gray">Sin meta</span>
+            {% elif p >= 100 %}
+              <span class="badge-green">Alcanzada</span>
+            {% elif p >= 70 %}
+              <span class="badge-amber">En progreso</span>
+            {% else %}
+              <span class="badge-red">Por debajo</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" style="text-align:center;color:var(--text3);padding:16px">Sin metas configuradas.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- Modal confirmar eliminación -->
+<div id="modal-confirmar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1100;align-items:center;justify-content:center;backdrop-filter:blur(4px)">
+  <div class="glow-card" style="width:360px;padding:28px;text-align:center;border:1px solid rgba(248,113,113,.2)">
+    <div style="font-size:36px;margin-bottom:12px">🗑</div>
+    <div style="font-size:15px;font-weight:700;color:var(--text1);margin-bottom:6px">¿Eliminar esta venta?</div>
+    <div id="confirm-detalle" style="font-size:12px;color:var(--text3);margin-bottom:20px;line-height:1.6"></div>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button onclick="cerrarConfirmar()" class="btn-glow btn-ghost" style="flex:1;padding:9px 0">Cancelar</button>
+      <form id="form-eliminar" method="POST" action="" style="flex:1">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn-glow" style="width:100%;padding:9px 0;background:rgba(255,80,80,.18);color:#f87171;border:1px solid rgba(255,80,80,.35);font-weight:600">
+          Sí, eliminar
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal registrar venta -->
+<div id="modal-venta" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999;align-items:center;justify-content:center">
+  <div class="glow-card" style="width:400px;padding:24px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="section-label">Registrar venta</div>
+      <button onclick="document.getElementById('modal-venta').style.display='none'"
+              style="background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer">✕</button>
+    </div>
+    <form method="POST" action="{{ url_for('ecommerce.registrar_venta') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div>
+          <label class="form-label">Influencer</label>
+          <select name="influencer_id" class="dark-input">
+            <option value="">🌿 Orgánico / Sin influencer</option>
+            {% for inf in influencers %}
+            <option value="{{ inf.id }}">{{ inf.nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Fecha *</label>
+          <input type="date" name="fecha" class="dark-input" required value="{{ hoy_str }}">
+        </div>
+        <div>
+          <label class="form-label">Monto ($) *</label>
+          <input type="number" name="monto" class="dark-input" placeholder="0" step="0.01" required>
+        </div>
+        <div>
+          <label class="form-label">Nota</label>
+          <input type="text" name="nota" class="dark-input" placeholder="Nota (opcional)">
+        </div>
+        <button type="submit" class="btn-glow btn-primary-glow">Guardar venta</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal editar venta -->
+<div id="modal-editar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999;align-items:center;justify-content:center">
+  <div class="glow-card" style="width:400px;padding:24px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="section-label">Editar venta</div>
+      <button onclick="document.getElementById('modal-editar').style.display='none'"
+              style="background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer">✕</button>
+    </div>
+    <form method="POST" id="form-editar" action="">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div>
+          <label class="form-label">Influencer</label>
+          <select name="influencer_id" id="edit-influencer" class="dark-input">
+            <option value="">🌿 Orgánico / Sin influencer</option>
+            {% for inf in influencers %}
+            <option value="{{ inf.id }}">{{ inf.nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Fecha *</label>
+          <input type="date" name="fecha" id="edit-fecha" class="dark-input" required>
+        </div>
+        <div>
+          <label class="form-label">Monto ($) *</label>
+          <input type="number" name="monto" id="edit-monto" class="dark-input" step="0.01" required>
+        </div>
+        <div>
+          <label class="form-label">Nota</label>
+          <input type="text" name="nota" id="edit-nota" class="dark-input">
+        </div>
+        <button type="submit" class="btn-glow btn-primary-glow">Guardar cambios</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal meta -->
+<div id="modal-meta" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999;align-items:center;justify-content:center">
+  <div class="glow-card" style="width:380px;padding:24px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="section-label">Agregar / editar meta mensual</div>
+      <button onclick="document.getElementById('modal-meta').style.display='none'"
+              style="background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer">✕</button>
+    </div>
+    <form method="POST" action="{{ url_for('ecommerce.metas') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div>
+          <label class="form-label">Mes</label>
+          <select name="mes" class="dark-input">
+            {% for n, nombre in [(1,'Enero'),(2,'Febrero'),(3,'Marzo'),(4,'Abril'),(5,'Mayo'),(6,'Junio'),
+                                 (7,'Julio'),(8,'Agosto'),(9,'Septiembre'),(10,'Octubre'),(11,'Noviembre'),(12,'Diciembre')] %}
+            <option value="{{ n }}" {% if n == mes %}selected{% endif %}>{{ nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Año</label>
+          <select name="anio" class="dark-input">
+            {% for y in [2024, 2025, 2026, 2027, 2028, 2029, 2030] %}
+            <option value="{{ y }}" {% if y == anio %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Meta ($) *</label>
+          <input type="number" name="meta" class="dark-input" step="0.01" required>
+        </div>
+        <input type="hidden" name="real" value="0">
+        <button type="submit" class="btn-glow btn-primary-glow">Guardar meta</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function abrirEditar(id, influencer_id, fecha, monto, nota) {
+  document.getElementById('form-editar').action = '/ecommerce/editar_venta/' + id;
+  document.getElementById('edit-influencer').value = influencer_id || '';
+  document.getElementById('edit-fecha').value = fecha || '';
+  document.getElementById('edit-monto').value = monto;
+  document.getElementById('edit-nota').value = nota || '';
+  document.getElementById('modal-editar').style.display = 'flex';
+}
+function confirmarEliminar(id, monto, fecha) {
+  document.getElementById('form-eliminar').action = '/ecommerce/eliminar_venta/' + id;
+  document.getElementById('confirm-detalle').innerHTML =
+    'Monto: <strong style="color:#f87171">' + monto + '</strong><br>' +
+    'Fecha: <strong style="color:var(--text2)">' + (fecha || '—') + '</strong>';
+  document.getElementById('modal-confirmar').style.display = 'flex';
+}
+function cerrarConfirmar() {
+  document.getElementById('modal-confirmar').style.display = 'none';
+}
+document.getElementById('modal-confirmar').addEventListener('click', function(e) {
+  if (e.target === this) cerrarConfirmar();
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% block title %}Tareas{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Tareas</div>
+      <div class="page-subtitle">Gestión de trabajos del equipo</div>
+    </div>
+    <a href="{{ url_for('tareas.nueva') }}" class="btn-glow btn-primary-glow">+ Nueva tarea</a>
+  </div>
+
+  <div class="filter-bar">
+    <form method="GET" style="display:flex;gap:8px;width:100%">
+      <input class="dark-input" type="text" name="q" placeholder="Buscar tarea..."
+             value="{{ request.args.get('q','') }}" style="flex:1">
+
+      {% if current_user.es_admin() and usuarios %}
+      <select class="dark-input" name="usuario_id" onchange="this.form.submit()">
+        <option value="">Todos los usuarios</option>
+        {% for u in usuarios %}
+        <option value="{{ u.id }}" {% if request.args.get('usuario_id')|string == u.id|string %}selected{% endif %}>
+          {{ u.nombre }}
+        </option>
+        {% endfor %}
+      </select>
+      {% endif %}
+
+      <select class="dark-input" name="estado" onchange="this.form.submit()">
+        <option value="">Todos los estados</option>
+        <option value="pendiente" {% if request.args.get('estado')=='pendiente' %}selected{% endif %}>⏳ Pendiente</option>
+        <option value="en_proceso" {% if request.args.get('estado')=='en_proceso' %}selected{% endif %}>⚙️ En proceso</option>
+        <option value="completada" {% if request.args.get('estado')=='completada' %}selected{% endif %}>✅ Completada</option>
+        <option value="postergada" {% if request.args.get('estado')=='postergada' %}selected{% endif %}>🔄 Postergada</option>
+      </select>
+
+      <button type="submit" class="btn-glow btn-ghost" style="font-size:11px;padding:6px 12px">Buscar</button>
+    </form>
+  </div>
+
+  {% if tareas %}
+  <div class="glow-card">
+    <table class="dark-table">
+      <thead>
+        <tr>
+          <th>Tarea</th>
+          <th>Asignado a</th>
+          <th>Entrega</th>
+          <th>Prioridad</th>
+          <th>Estado</th>
+          <th style="text-align:right">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in tareas %}
+        <tr>
+          <td>
+            <div style="font-weight:500;color:var(--text1)">{{ t.titulo }}</div>
+            {% if t.descripcion %}
+              <div style="font-size:11px;color:var(--text3);margin-top:2px">
+                {{ t.descripcion[:60] }}{% if t.descripcion|length > 60 %}...{% endif %}
+              </div>
+            {% endif %}
+            {% if t.campana_nombre %}
+              <div style="font-size:10px;color:var(--violet2);margin-top:2px">
+                📋 {{ t.campana_nombre }}
+              </div>
+            {% endif %}
+          </td>
+          <td>
+            <span style="color:var(--blue2)">{{ t.usuario_nombre or 'Sin asignar' }}</span>
+          </td>
+          <td style="font-size:11px;color:var(--text2)">
+            {{ t.fecha_entrega.strftime('%d/%m/%Y') if t.fecha_entrega else '—' }}
+          </td>
+          <td>
+            {% if t.prioridad == 'alta' %}<span class="badge-red">🔴 Alta</span>
+            {% elif t.prioridad == 'media' %}<span class="badge-amber">🟡 Media</span>
+            {% else %}<span class="badge-green">🟢 Baja</span>{% endif %}
+          </td>
+          <td>
+            {% if t.estado == 'completada' %}<span class="badge-green">✅ Completada</span>
+            {% elif t.estado == 'postergada' %}<span class="badge-amber">🔄 Postergada</span>
+            {% elif t.estado == 'en_proceso' %}<span class="badge-cyan">⚙️ En proceso</span>
+            {% else %}<span class="badge-blue">⏳ Pendiente</span>{% endif %}
+          </td>
+          <td>
+            <div style="display:flex;gap:5px;justify-content:flex-end">
+              {% if t.estado != 'completada' %}
+              <button class="btn-glow btn-success-glow btn-confirm" style="font-size:10px;padding:4px 10px;cursor:pointer;border:none"
+                data-type="success" data-icon="✓" data-title="Marcar como hecha"
+                data-text="¿Confirmas que <strong>{{ t.titulo|e }}</strong> fue completada?"
+                data-confirm="Sí, marcar hecha"
+                data-url="{{ url_for('tareas.completar', id=t.id) }}">✓ Hecho</button>
+              {% endif %}
+
+              <a href="{{ url_for('tareas.editar', id=t.id) }}" class="btn-glow btn-cyan-glow" style="font-size:10px;padding:4px 10px">✏ Editar</a>
+
+              {% if t.estado != 'completada' %}
+              <a href="{{ url_for('tareas.postergar', id=t.id) }}" class="btn-glow btn-warn-glow" style="font-size:10px;padding:4px 10px">⏸ Postergar</a>
+              {% endif %}
+
+              <button class="btn-glow btn-danger-glow btn-confirm" style="font-size:10px;padding:4px 10px;cursor:pointer;border:none"
+                data-type="danger" data-icon="✕" data-title="Eliminar tarea"
+                data-text="Esta acción es permanente. ¿Eliminar <strong>{{ t.titulo|e }}</strong>?"
+                data-confirm="Sí, eliminar"
+                data-url="{{ url_for('tareas.eliminar', id=t.id) }}">✕</button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="glow-card" style="text-align:center;color:var(--text3);padding:32px">
+    No hay tareas que coincidan con los filtros.
+  </div>
+  {% endif %}
+</div>
+
+<script>
+document.addEventListener('click', function(e) {
+  var btn = e.target.closest('.btn-confirm');
+  if (!btn) return;
+  confirmAction({
+    type:        btn.dataset.type,
+    icon:        btn.dataset.icon,
+    title:       btn.dataset.title,
+    text:        btn.dataset.text,
+    confirmText: btn.dataset.confirm,
+    url:         btn.dataset.url
+  });
+});
+</script>
+{% endblock %}

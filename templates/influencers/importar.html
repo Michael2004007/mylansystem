@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+{% block title %}Importar Influencers{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Importar influencers</div>
+      <div class="page-subtitle">Subí un archivo Excel con el formato del modelo</div>
+    </div>
+    <a href="{{ url_for('influencers.index') }}" class="btn-glow btn-ghost">← Volver</a>
+  </div>
+
+  <div style="max-width:560px">
+    <div style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.25);border-radius:12px;padding:14px 16px;margin-bottom:20px">
+      <div style="font-size:11px;color:#93c5fd;line-height:1.8">
+        <span style="color:#60a5fa;font-weight:600">Columnas requeridas:</span> nombre, handle, ig, wa, estado<br>
+        <span style="color:#60a5fa;font-weight:600">Estados válidos:</span> nuevo, trabajaron, sugerido
+      </div>
+      <a href="{{ url_for('influencers.descargar_plantilla') }}" class="btn-glow btn-ghost" style="font-size:11px;padding:4px 12px;margin-top:10px;display:inline-block">↓ Descargar modelo Excel</a>
+    </div>
+
+    <div class="glow-card" style="padding:0;overflow:hidden">
+      <div id="drop-zone"
+        ondragover="event.preventDefault();this.classList.add('dz-active')"
+        ondragleave="this.classList.remove('dz-active')"
+        ondrop="handleDrop(event)"
+        onclick="document.getElementById('input-excel').click()"
+        style="padding:52px 24px;text-align:center;cursor:pointer;border-bottom:1px solid var(--dk-border);transition:background .2s">
+
+        <div id="dz-icon" style="font-size:40px;margin-bottom:12px;transition:transform .2s">📊</div>
+        <div style="font-size:13px;font-weight:600;color:var(--text1);margin-bottom:4px">Arrastrá tu archivo .xlsx aquí</div>
+        <div style="font-size:11px;color:var(--text3)">o <span style="color:#60a5fa;text-decoration:underline">hacé clic para elegir</span></div>
+        <div id="nombre-archivo" style="font-size:11px;color:#34d399;margin-top:12px;font-weight:600"></div>
+      </div>
+
+      <input type="file" id="input-excel" accept=".xlsx,.xls" style="display:none" onchange="archivoSeleccionado(this)">
+
+      <div id="errores-excel" style="display:none;margin:0;padding:12px 20px;background:rgba(239,68,68,.1);border-bottom:1px solid rgba(239,68,68,.2);font-size:11px;color:#fca5a5"></div>
+
+      <div id="preview-excel" style="display:none">
+        <div style="padding:10px 20px 6px;font-size:11px;color:var(--text3);border-bottom:1px solid var(--dk-border)">
+          Vista previa · <span id="resumen-filas" style="color:#60a5fa"></span>
+        </div>
+        <div id="tabla-preview" style="overflow-x:auto;font-size:10px"></div>
+      </div>
+
+      <div style="display:flex;gap:8px;justify-content:flex-end;padding:14px 20px">
+        <a href="{{ url_for('influencers.index') }}" class="btn-glow btn-ghost" style="font-size:12px">Cancelar</a>
+        <button id="btn-importar" onclick="importarExcel()" class="btn-glow btn-primary-glow" style="font-size:12px" disabled>Importar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .dz-active { background: rgba(59,130,246,.06) !important; }
+  .dz-active #dz-icon { transform: scale(1.15); }
+  #tabla-preview table { width:100%;border-collapse:collapse }
+  #tabla-preview th { padding:7px 14px;border-bottom:1px solid var(--dk-border);color:var(--text3);text-align:left;font-size:10px;font-weight:600;background:rgba(255,255,255,.02) }
+  #tabla-preview td { padding:6px 14px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--text2);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
+</style>
+
+<script>
+const COLUMNAS = ['nombre','handle','ig','wa','estado'];
+const ESTADOS_VALIDOS = ['nuevo','trabajaron','sugerido','new','worked','suggested','sugeridos'];
+const CSRF_TOKEN = '{{ csrf_token() }}';
+let datosParaImportar = [];
+
+function ensureXlsxLoaded() {
+  return new Promise(function(resolve, reject){
+    if (window.XLSX) return resolve();
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload = function(){ resolve(); };
+    s.onerror = function(){ reject(new Error('No se pudo cargar XLSX')); };
+    document.head.appendChild(s);
+  });
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('dz-active');
+  const file = e.dataTransfer.files[0];
+  if (file) procesarArchivo(file);
+}
+
+function archivoSeleccionado(input) {
+  if (input.files[0]) procesarArchivo(input.files[0]);
+}
+
+async function procesarArchivo(file) {
+  document.getElementById('nombre-archivo').textContent = '✓ ' + file.name;
+
+  try {
+    await ensureXlsxLoaded();
+  } catch (_) {
+    mostrarError('No se pudo cargar la librería de Excel. Recargá la página e intentá de nuevo.');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+      if (!rows.length) { mostrarError('El archivo está vacío.'); return; }
+
+      const cols = Object.keys(rows[0]).map(c => c.toLowerCase().trim());
+      const faltantes = COLUMNAS.filter(c => !cols.includes(c));
+      if (faltantes.length) {
+        mostrarError('Faltan columnas: <strong>' + faltantes.join(', ') + '</strong>');
+        return;
+      }
+
+      const errores = [];
+      datosParaImportar = rows.map((row, idx) => {
+        const obj = {};
+        Object.keys(row).forEach(k => { obj[k.toLowerCase().trim()] = String(row[k]).trim(); });
+        obj.estado = (obj.estado || '').toLowerCase();
+
+        if (!obj.nombre) errores.push('Fila ' + (idx + 2) + ': falta el nombre.');
+        if (obj.estado && !ESTADOS_VALIDOS.includes(obj.estado)) {
+          errores.push('Fila ' + (idx + 2) + ': estado inválido "' + obj.estado + '". Usar: nuevo, trabajaron o sugerido');
+        }
+        return obj;
+      });
+
+      if (errores.length) {
+        mostrarError(errores.slice(0,5).join('<br>') + (errores.length > 5 ? '<br>...y ' + (errores.length - 5) + ' más.' : ''));
+        return;
+      }
+
+      document.getElementById('errores-excel').style.display = 'none';
+      mostrarPreview(rows);
+      document.getElementById('btn-importar').disabled = false;
+
+    } catch(err) {
+      mostrarError('No se pudo leer el archivo. Asegurate de que sea un .xlsx válido.');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function mostrarError(msg) {
+  const el = document.getElementById('errores-excel');
+  el.innerHTML = '⚠ ' + msg;
+  el.style.display = 'block';
+  document.getElementById('preview-excel').style.display = 'none';
+  document.getElementById('btn-importar').disabled = true;
+  datosParaImportar = [];
+}
+
+function mostrarPreview(rows) {
+  const preview = rows.slice(0, 5);
+  let html = '<table><tr>' + COLUMNAS.map(c => '<th>' + c + '</th>').join('') + '</tr>';
+  preview.forEach(row => {
+    const r = {};
+    Object.keys(row).forEach(k => { r[k.toLowerCase().trim()] = row[k]; });
+    html += '<tr>' + COLUMNAS.map(c => '<td>' + (r[c] || '-') + '</td>').join('') + '</tr>';
+  });
+  html += '</table>';
+  document.getElementById('tabla-preview').innerHTML = html;
+  document.getElementById('resumen-filas').textContent = rows.length + ' fila' + (rows.length !== 1 ? 's' : '') + ' encontradas';
+  document.getElementById('preview-excel').style.display = 'block';
+}
+
+function importarExcel() {
+  if (!datosParaImportar.length) return;
+  const btn = document.getElementById('btn-importar');
+  btn.textContent = 'Importando...';
+  btn.disabled = true;
+
+  fetch('{{ url_for("influencers.importar_excel") }}', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': CSRF_TOKEN
+    },
+    body: JSON.stringify({ influencers: datosParaImportar })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.ok) {
+      window.location.href = '{{ url_for("influencers.index") }}';
+    } else {
+      mostrarError(data.error || 'Error al importar.');
+      btn.textContent = 'Importar';
+      btn.disabled = false;
+    }
+  })
+  .catch(() => {
+    mostrarError('Error de conexión.');
+    btn.textContent = 'Importar';
+    btn.disabled = false;
+  });
+}
+</script>
+{% endblock %}

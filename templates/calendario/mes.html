@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% block title %}Calendario - {{ anio }}{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="topbar">
+    <div>
+      {% set nombres_mes = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'] %}
+      <div class="page-title">{{ nombres_mes[mes] }} {{ anio }}</div>
+      <div class="page-subtitle">Eventos y acciones sugeridas</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="document.getElementById('modal-nuevo').style.display='flex'" class="btn-glow btn-primary-glow">+ Nuevo evento</button>
+      <a href="{{ url_for('calendario.index', anio=anio) }}" class="btn-glow btn-ghost">← Volver</a>
+    </div>
+  </div>
+
+  <div class="glow-card">
+    {% if eventos %}
+    <table class="dark-table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Evento</th>
+          <th>Tipo</th>
+          <th>Acción sugerida</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in eventos %}
+        <tr>
+          <td style="font-weight:600;color:var(--blue2);width:110px;white-space:nowrap">
+            {{ e.fecha.strftime('%d/%m/%Y') if e.fecha else '—' }}
+          </td>
+          <td style="color:var(--text1)">{{ e.nombre }}</td>
+          <td>
+            {% if e.tipo == 'fecha_clave' %}
+              <span class="badge-blue" style="font-size:10px">Fecha clave</span>
+            {% elif e.tipo == 'campana' %}
+              <span class="badge-violet" style="font-size:10px">Campaña</span>
+            {% elif e.tipo == 'feriado' %}
+              <span class="badge-green" style="font-size:10px">Feriado</span>
+            {% else %}
+              <span class="badge-amber" style="font-size:10px">Otro</span>
+            {% endif %}
+          </td>
+          <td style="color:var(--text3);font-size:11px">{{ e.accion_sugerida or '—' }}</td>
+          <td style="width:80px;white-space:nowrap">
+            <button onclick="abrirEditar({{ e.id }}, '{{ e.nombre }}', '{{ e.fecha }}', '{{ e.tipo }}', '{{ e.accion_sugerida or '' }}')"
+                    class="btn-glow btn-ghost" style="font-size:10px;padding:3px 8px;margin-right:4px">✎</button>
+            <button onclick="abrirEliminar({{ e.id }}, '{{ e.nombre }}')"
+                    class="btn-glow btn-danger-glow" style="font-size:10px;padding:3px 8px">✕</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div style="text-align:center;color:var(--text3);padding:24px">No hay eventos en este mes.</div>
+    {% endif %}
+  </div>
+</div>
+
+<div id="modal-nuevo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center">
+  <div class="glow-card" style="width:440px;max-width:92vw">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <span style="font-size:14px;font-weight:600;color:var(--text1)">Nuevo evento</span>
+      <button onclick="document.getElementById('modal-nuevo').style.display='none'" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px">✕</button>
+    </div>
+    <form method="POST" action="{{ url_for('calendario.nuevo') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div style="margin-bottom:10px">
+        <label class="form-label">Nombre del evento</label>
+        <input class="dark-input" type="text" name="nombre" required>
+      </div>
+      <div style="margin-bottom:10px">
+        <label class="form-label">Fecha</label>
+        <input class="dark-input" type="date" name="fecha" value="{{ '%04d-%02d-01' % (anio, mes) }}" required>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div>
+          <label class="form-label">Tipo</label>
+          <select class="dark-input" name="tipo" required>
+            <option value="fecha_clave">Fecha clave</option>
+            <option value="campana">Campaña</option>
+            <option value="feriado">Feriado</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Campaña (opcional)</label>
+          <select class="dark-input" name="campana_id">
+            <option value="">— ninguna —</option>
+            {% for c in campanas %}
+            <option value="{{ c.id }}">{{ c.nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:16px">
+        <label class="form-label">Acción sugerida (opcional)</label>
+        <input class="dark-input" type="text" name="accion_sugerida">
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button type="button" onclick="document.getElementById('modal-nuevo').style.display='none'" class="btn-glow btn-ghost">Cancelar</button>
+        <button type="submit" class="btn-glow btn-primary-glow">Guardar evento</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="modal-editar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center">
+  <div class="glow-card" style="width:440px;max-width:92vw">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <span style="font-size:14px;font-weight:600;color:var(--text1)">Editar evento</span>
+      <button onclick="document.getElementById('modal-editar').style.display='none'" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px">✕</button>
+    </div>
+    <form method="POST" id="form-editar">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div style="margin-bottom:10px">
+        <label class="form-label">Nombre del evento</label>
+        <input class="dark-input" type="text" name="nombre" id="edit-nombre" required>
+      </div>
+      <div style="margin-bottom:10px">
+        <label class="form-label">Fecha</label>
+        <input class="dark-input" type="date" name="fecha" id="edit-fecha" required>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div>
+          <label class="form-label">Tipo</label>
+          <select class="dark-input" name="tipo" id="edit-tipo" required>
+            <option value="fecha_clave">Fecha clave</option>
+            <option value="campana">Campaña</option>
+            <option value="feriado">Feriado</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Campaña (opcional)</label>
+          <select class="dark-input" name="campana_id">
+            <option value="">— ninguna —</option>
+            {% for c in campanas %}
+            <option value="{{ c.id }}">{{ c.nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:16px">
+        <label class="form-label">Acción sugerida (opcional)</label>
+        <input class="dark-input" type="text" name="accion_sugerida" id="edit-accion">
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button type="button" onclick="document.getElementById('modal-editar').style.display='none'" class="btn-glow btn-ghost">Cancelar</button>
+        <button type="submit" class="btn-glow btn-primary-glow">Guardar cambios</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="modal-eliminar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center">
+  <div class="glow-card" style="width:380px;max-width:92vw;text-align:center">
+    <div style="font-size:32px;margin-bottom:10px">🗑️</div>
+    <div style="font-size:14px;font-weight:600;color:var(--text1);margin-bottom:8px">¿Eliminar evento?</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:20px">
+      Estás por eliminar <strong id="eliminar-nombre" style="color:var(--text1)"></strong>.
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button onclick="document.getElementById('modal-eliminar').style.display='none'" class="btn-glow btn-ghost">Cancelar</button>
+      <a id="eliminar-link" href="#" class="btn-glow btn-danger-glow">Sí, eliminar</a>
+    </div>
+  </div>
+</div>
+
+<script>
+function abrirEliminar(id, nombre) {
+  document.getElementById('eliminar-nombre').textContent = nombre;
+  document.getElementById('eliminar-link').href = '/calendario/eliminar/' + id;
+  document.getElementById('modal-eliminar').style.display = 'flex';
+}
+
+function abrirEditar(id, nombre, fecha, tipo, accion) {
+  document.getElementById('edit-nombre').value = nombre;
+  document.getElementById('edit-fecha').value = fecha;
+  document.getElementById('edit-tipo').value = tipo;
+  document.getElementById('edit-accion').value = accion;
+  document.getElementById('form-editar').action = '/calendario/editar/' + id;
+  document.getElementById('modal-editar').style.display = 'flex';
+}
+</script>
+{% endblock %}

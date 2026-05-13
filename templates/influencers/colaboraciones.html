@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+{% block title %}Colaboraciones activas{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  <div class="topbar">
+    <div>
+      <div class="page-title">Colaboraciones</div>
+      <div class="page-subtitle">Influencers activos y sus colaboraciones</div>
+    </div>
+    <a href="{{ url_for('influencers.index') }}" class="btn-glow btn-ghost">← Influencers</a>
+  </div>
+
+  {% set total = colabs | length %}
+  {% set con_camp = colabs | selectattr('campana_nombre') | list | length %}
+  {% set sin_camp = total - con_camp %}
+  {% set ecom = (colabs | selectattr('tipo', 'equalto', 'ecommerce') | list | length) + (colabs | selectattr('tipo', 'equalto', 'ecom') | list | length) %}
+  {% set perm = colabs | selectattr('permuta_tag') | list | length %}
+  {% set hechas = colabs | selectattr('estado', 'equalto', 'hecho') | list | length %}
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+    <div class="glow-card" style="flex:1;min-width:110px;padding:14px 16px">
+      <div style="font-size:10px;color:var(--text3)">Total</div>
+      <div style="font-size:22px;font-weight:700;color:var(--blue2)">{{ total }}</div>
+    </div>
+    <div class="glow-card" style="flex:1;min-width:110px;padding:14px 16px">
+      <div style="font-size:10px;color:var(--text3)">Con campaña</div>
+      <div style="font-size:22px;font-weight:700;color:var(--green)">{{ con_camp }}</div>
+    </div>
+    <div class="glow-card" style="flex:1;min-width:110px;padding:14px 16px">
+      <div style="font-size:10px;color:var(--text3)">Sin campaña</div>
+      <div style="font-size:22px;font-weight:700;color:var(--amber)">{{ sin_camp }}</div>
+    </div>
+    <div class="glow-card" style="flex:1;min-width:110px;padding:14px 16px">
+      <div style="font-size:10px;color:var(--text3)">Ecommerce</div>
+      <div style="font-size:22px;font-weight:700;color:var(--cyan)">{{ ecom }}</div>
+    </div>
+    <div class="glow-card" style="flex:1;min-width:110px;padding:14px 16px">
+      <div style="font-size:10px;color:var(--text3)">Permuta</div>
+      <div style="font-size:22px;font-weight:700;color:#c4b5fd">{{ perm }}</div>
+    </div>
+    <div class="glow-card" style="flex:1;min-width:110px;padding:14px 16px">
+      <div style="font-size:10px;color:var(--text3)">Hechas</div>
+      <div style="font-size:22px;font-weight:700;color:var(--green)">{{ hechas }}</div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:2px;border-bottom:1px solid var(--dk-border);margin-bottom:14px;flex-wrap:wrap">
+    <a href="{{ url_for('influencers.colaboraciones') }}"
+       class="tab-link {{ 'active' if not request.args.get('f') }}">Todas</a>
+    <a href="{{ url_for('influencers.colaboraciones', f='pendientes') }}"
+       class="tab-link {{ 'active' if request.args.get('f') == 'pendientes' }}">Pendientes</a>
+    <a href="{{ url_for('influencers.colaboraciones', f='hechas') }}"
+       class="tab-link {{ 'active' if request.args.get('f') == 'hechas' }}">Hechas</a>
+    <a href="{{ url_for('influencers.colaboraciones', f='campana') }}"
+       class="tab-link {{ 'active' if request.args.get('f') == 'campana' }}">Con campaña</a>
+    <a href="{{ url_for('influencers.colaboraciones', f='sin_campana') }}"
+       class="tab-link {{ 'active' if request.args.get('f') == 'sin_campana' }}">Sin campaña</a>
+    <a href="{{ url_for('influencers.colaboraciones', f='ecom') }}"
+       class="tab-link {{ 'active' if request.args.get('f') == 'ecom' }}">Ecommerce</a>
+    <a href="{{ url_for('influencers.colaboraciones', f='permuta') }}"
+       class="tab-link {{ 'active' if request.args.get('f') == 'permuta' }}">Permuta</a>
+  </div>
+
+  {% if lista %}
+  <div style="display:flex;flex-direction:column;gap:8px">
+    {% for c in lista %}
+      {% set partes = (c.influencer_nombre or 'XX').split(' ') %}
+      {% set initials = partes[0][0] ~ (partes[1][0] if partes | length > 1 else '') %}
+      {% set is_ecom = c.tipo in ['ecom', 'ecommerce'] %}
+
+      <div class="glow-card" style="padding:14px 16px;{% if is_ecom %}border-color:rgba(6,182,212,.35);{% elif c.permuta_tag %}border-color:rgba(139,92,246,.35);{% endif %}">
+        <div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
+
+          <div style="width:40px;height:40px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,rgba(59,130,246,.3),rgba(139,92,246,.3));border:1px solid rgba(59,130,246,.3);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#93c5fd">
+            {{ initials | upper }}
+          </div>
+
+          <div style="flex:1;min-width:160px">
+            <div style="font-size:13px;font-weight:600;color:var(--text1)">
+              {{ c.influencer_nombre or '—' }}
+              {% if c.influencer_handle %}
+                <span style="font-size:10px;color:var(--text3);font-weight:400">{{ c.influencer_handle }}</span>
+              {% endif %}
+            </div>
+
+            <div style="display:flex;gap:5px;margin-top:3px;flex-wrap:wrap">
+              {% if is_ecom %}
+                <span class="badge-cyan">Ecommerce</span>
+              {% else %}
+                <span class="badge-blue">Contenido</span>
+              {% endif %}
+
+              {% if c.estado == 'hecho' %}
+                <span class="badge-green">Hecho</span>
+              {% else %}
+                <span class="badge-amber">Pendiente</span>
+              {% endif %}
+
+              {% if c.permuta_tag %}
+                <span class="badge-violet">Permuta</span>
+              {% elif c.monto and c.monto > 0 %}
+                <span class="badge-green">Efectivo</span>
+              {% endif %}
+            </div>
+
+            <div style="display:flex;gap:5px;margin-top:5px">
+              {% if c.influencer_ig %}
+                <a href="{{ c.influencer_ig }}" target="_blank" style="font-size:9px;padding:2px 7px;border-radius:5px;background:rgba(255,255,255,.05);color:var(--text2);border:1px solid var(--dk-border2);text-decoration:none">IG</a>
+              {% endif %}
+              {% if c.influencer_wa %}
+                <a href="https://wa.me/{{ c.influencer_wa }}" target="_blank" style="font-size:9px;padding:2px 7px;border-radius:5px;background:rgba(255,255,255,.05);color:var(--text2);border:1px solid var(--dk-border2);text-decoration:none">WA</a>
+              {% endif %}
+            </div>
+          </div>
+
+          <div style="flex:2;min-width:200px">
+            <div style="margin-bottom:4px">
+              {% if c.campana_nombre %}
+                <span style="font-size:10px;color:var(--text3)">Campaña:</span>
+                <span style="font-size:11px;font-weight:600;color:var(--blue2)">{{ c.campana_nombre }}</span>
+              {% else %}
+                <span style="font-size:10px;color:var(--amber)">⚠ Sin campaña asignada</span>
+              {% endif %}
+            </div>
+
+            {% if c.detalle %}
+              <div style="font-size:11px;color:var(--text2);margin-bottom:3px">{{ c.detalle }}</div>
+            {% endif %}
+
+            {% if c.permuta_tag %}
+              <div style="font-size:10px;color:#c4b5fd">🎁 Permuta: {{ c.permuta_tag }}</div>
+            {% endif %}
+
+            {% if is_ecom %}
+              <div style="font-size:10px;color:var(--cyan)">
+                🏷 Código: <strong>{{ c.codigo_promo or '—' }}</strong>
+                {% if c.pct_comision %} · {{ c.pct_comision }}% comisión{% endif %}
+                {% if c.pct_descuento %} · {{ c.pct_descuento }}% desc. seguidores{% endif %}
+              </div>
+            {% endif %}
+
+            {% if c.fecha_entrega %}
+              <div style="font-size:10px;color:var(--text3);margin-top:2px">📅 Entrega: {{ c.fecha_entrega }}</div>
+            {% endif %}
+          </div>
+
+          <div style="text-align:right;flex-shrink:0;min-width:210px">
+            {% if c.monto and c.monto > 0 %}
+              <div style="font-size:16px;font-weight:700;color:var(--amber)">${{ '{:,.0f}'.format(c.monto) }}</div>
+            {% elif c.permuta_tag %}
+              <div style="font-size:12px;color:#c4b5fd;font-weight:600">Permuta</div>
+            {% elif is_ecom %}
+              <div style="font-size:12px;color:var(--cyan);font-weight:600">Ecom</div>
+            {% else %}
+              <div style="font-size:11px;color:var(--text3)">—</div>
+            {% endif %}
+
+            <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:8px;flex-wrap:wrap">
+              <a href="{{ url_for('influencers.editar_colaboracion', id=c.id) }}" class="btn-glow btn-ghost" style="font-size:10px;padding:4px 10px">Editar</a>
+
+              <form method="POST" action="{{ url_for('influencers.eliminar_colaboracion', id=c.id) }}" onsubmit="return confirm('¿Eliminar colaboración?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-glow btn-danger-glow" style="font-size:10px;padding:4px 10px">Eliminar</button>
+              </form>
+
+              {% if not is_ecom and c.estado != 'hecho' %}
+              <form method="POST" action="{{ url_for('influencers.colaboracion_hecho', id=c.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-glow btn-success-glow" style="font-size:10px;padding:4px 10px">Marcar hecho</button>
+              </form>
+              {% endif %}
+
+              {% if c.estado == 'hecho' %}
+              <form method="POST" action="{{ url_for('influencers.colaboracion_pendiente', id=c.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-glow btn-warn-glow" style="font-size:10px;padding:4px 10px">Volver a pendiente</button>
+              </form>
+              {% elif is_ecom %}
+              <div style="font-size:10px;color:var(--cyan);margin-top:7px">Colaboración continua</div>
+              {% endif %}
+            </div>
+          </div>
+
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="glow-card" style="text-align:center;color:var(--text3);padding:32px;font-size:12px">
+    No hay colaboraciones en esta categoría.
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

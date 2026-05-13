@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+{% block title %}Inicio{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  <div style="background:linear-gradient(90deg,rgba(6,182,212,.12),rgba(59,130,246,.08));border:1px solid rgba(6,182,212,.25);border-radius:10px;padding:9px 16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:16px">
+    <div style="display:flex;align-items:center;gap:10px;font-size:12px;flex:1;min-width:0;flex-wrap:wrap">
+      <span style="width:8px;height:8px;border-radius:50%;background:var(--cyan);flex-shrink:0;display:inline-block;box-shadow:0 0 6px var(--cyan)"></span>
+      <span style="color:var(--text2);flex-shrink:0">Esta semana ·</span>
+      {% if tareas_semana %}
+        <span style="color:var(--text1);font-weight:600;flex-shrink:0">{{ tareas_semana|length }} tarea{{ 's' if tareas_semana|length != 1 }} por entregar</span>
+        <span style="color:var(--text3);flex-shrink:0">—</span>
+        {% for persona, lista in tareas_semana_por_persona.items() %}
+          <span style="display:inline-flex;align-items:center;gap:5px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.25);border-radius:20px;padding:2px 10px;flex-shrink:0">
+            <span style="color:var(--text2);font-size:11px">{{ persona }}</span>
+            <span style="background:var(--cyan);color:#000;font-size:10px;font-weight:700;border-radius:50%;width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">{{ lista|length }}</span>
+          </span>
+        {% endfor %}
+      {% else %}
+        <span style="color:var(--green);font-weight:600">Sin entregas esta semana</span>
+        <span style="color:var(--text3)">— Buen momento para planificar</span>
+      {% endif %}
+    </div>
+    <div style="font-size:11px;color:var(--text3);flex-shrink:0" id="fecha-hoy"></div>
+  </div>
+
+  <div style="background:linear-gradient(135deg,rgba(37,99,235,.15),rgba(139,92,246,.1));border:1px solid rgba(59,130,246,.2);border-radius:18px;padding:28px 32px;margin-bottom:24px;position:relative;overflow:hidden">
+    <div style="position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(99,102,241,.15),transparent);border-radius:50%"></div>
+    <div style="position:absolute;bottom:-30px;left:200px;width:150px;height:150px;background:radial-gradient(circle,rgba(6,182,212,.1),transparent);border-radius:50%"></div>
+    <div style="display:flex;align-items:center;gap:20px;position:relative">
+      <div style="position:relative;display:inline-block">
+        {% if logo %}
+          <div style="width:68px;height:68px;border-radius:50%;border:2px solid rgba(59,130,246,.4);overflow:hidden;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(37,99,235,.2),rgba(139,92,246,.15));box-shadow:0 0 24px rgba(59,130,246,.2)">
+            <img src="{{ url_for('static', filename=logo) }}" alt="Logo" style="width:52px;height:52px;object-fit:contain;border-radius:50%">
+          </div>
+        {% else %}
+          <div style="width:68px;height:68px;border-radius:50%;border:2px solid rgba(59,130,246,.4);display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(37,99,235,.2),rgba(139,92,246,.15));box-shadow:0 0 24px rgba(59,130,246,.2)">
+            <span style="font-size:24px;font-weight:800;color:var(--blue2)">M</span>
+          </div>
+        {% endif %}
+        {% if current_user.rol == 'admin' and current_user.id == 1 %}
+          <button onclick="document.getElementById('modal-logo').style.display='flex'" style="position:absolute;top:-4px;right:-4px;width:22px;height:22px;border-radius:50%;background:var(--blue);border:none;cursor:pointer;font-size:11px;color:#fff;display:flex;align-items:center;justify-content:center" title="Cambiar logo">✎</button>
+        {% elif current_user.rol == 'admin' and current_user.id != 1 %}
+          <button onclick="document.getElementById('modal-perm').style.display='flex'" style="position:absolute;top:-4px;right:-4px;width:22px;height:22px;border-radius:50%;background:var(--text3);border:none;cursor:pointer;font-size:11px;color:#fff;display:flex;align-items:center;justify-content:center">✎</button>
+        {% endif %}
+      </div>
+      <div>
+        <div style="font-size:22px;font-weight:700;color:var(--text1)">Bienvenido, {{ current_user.nombre }} 👋</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px">Panel de control · Marketing System</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label" style="margin-bottom:10px">Accesos rápidos</div>
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:24px">
+    <a href="{{ url_for('tareas.index') }}" class="glow-card" style="text-align:center;text-decoration:none;padding:14px 10px">
+      <div style="font-size:20px;margin-bottom:5px;color:var(--blue2)">✓</div>
+      <div style="font-size:11px;font-weight:600;color:var(--text1)">Tareas</div>
+    </a>
+    <a href="{{ url_for('campanas.index') }}" class="glow-card" style="text-align:center;text-decoration:none;padding:14px 10px">
+      <div style="font-size:20px;margin-bottom:5px;color:var(--violet2)">◎</div>
+      <div style="font-size:11px;font-weight:600;color:var(--text1)">Campañas</div>
+    </a>
+    <a href="{{ url_for('influencers.index') }}" class="glow-card" style="text-align:center;text-decoration:none;padding:14px 10px">
+      <div style="font-size:20px;margin-bottom:5px;color:var(--amber)">★</div>
+      <div style="font-size:11px;font-weight:600;color:var(--text1)">Influencers</div>
+    </a>
+    <a href="{{ url_for('ecommerce.index') }}" class="glow-card" style="text-align:center;text-decoration:none;padding:14px 10px">
+      <div style="font-size:20px;margin-bottom:5px;color:var(--green)">◆</div>
+      <div style="font-size:11px;font-weight:600;color:var(--text1)">Ecommerce</div>
+    </a>
+    <a href="{{ url_for('reportes.index') }}" class="glow-card" style="text-align:center;text-decoration:none;padding:14px 10px">
+      <div style="font-size:20px;margin-bottom:5px;color:var(--text2)">≡</div>
+      <div style="font-size:11px;font-weight:600;color:var(--text1)">Reportes</div>
+    </a>
+  </div>
+
+  <div style="border-top:1px solid var(--dk-border);padding-top:20px;margin-bottom:8px">
+    <div class="page-title" style="margin-bottom:4px">Dashboard</div>
+    <div class="page-subtitle" style="margin-bottom:16px">Resumen ejecutivo del sistema</div>
+  </div>
+
+  {% set campanas_activas = campanas | selectattr('status', 'equalto', 'activa') | list %}
+  {% set total_presupuesto = campanas | sum(attribute='presupuesto') %}
+  {% set total_gastado = campanas | sum(attribute='gastado') %}
+
+  <div class="row g-3 mb-3">
+    <div class="col">
+      <div class="stat-card">
+        <div class="sc-icon" style="background:rgba(96,165,250,.15);color:var(--blue2)">✓</div>
+        <div class="sc-val" style="color:var(--blue2)">{{ pendientes|length }}</div>
+        <div class="sc-lbl">Tareas pendientes</div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="stat-card">
+        <div class="sc-icon" style="background:rgba(167,139,250,.15);color:var(--violet2)">★</div>
+        <div class="sc-val" style="color:var(--violet2)">{{ influencers_count }}</div>
+        <div class="sc-lbl">Influencers</div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="stat-card">
+        <div class="sc-icon" style="background:rgba(6,182,212,.15);color:var(--cyan)">◎</div>
+        <div class="sc-val" style="color:var(--cyan)">{{ campanas|length }}</div>
+        <div class="sc-lbl">Campañas</div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="stat-card">
+        <div class="sc-icon" style="background:rgba(16,185,129,.15);color:var(--green)">▶</div>
+        <div class="sc-val" style="color:var(--green)">{{ campanas_activas|length }}</div>
+        <div class="sc-lbl">Campañas activas</div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="stat-card">
+        <div class="sc-icon" style="background:rgba(245,158,11,.15);color:var(--amber)">$</div>
+        {% if total_presupuesto > 0 %}
+          <div class="sc-val" style="color:var(--amber)">${{ '{:,.0f}'.format(total_gastado) }}</div>
+          <div class="sc-lbl">Gastado total</div>
+        {% else %}
+          <div class="sc-val" style="color:var(--amber)">{{ tareas|length }}</div>
+          <div class="sc-lbl">Total tareas</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-6">
+      <div class="glow-card">
+        <div class="section-label">Tareas próximas</div>
+        {% if pendientes %}
+          {% for t in pendientes[:6] %}
+          <div style="padding:7px 0;border-bottom:1px solid var(--dk-border);display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-size:12px;font-weight:500;color:var(--text1)">{{ t.titulo }}</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:2px">{{ t.persona }} · {{ t.fecha_entrega }}</div>
+            </div>
+            {% if t.prioridad == 'alta' %}
+              <span class="badge-red">Alta</span>
+            {% elif t.prioridad == 'media' %}
+              <span class="badge-amber">Media</span>
+            {% else %}
+              <span class="badge-blue">Normal</span>
+            {% endif %}
+          </div>
+          {% endfor %}
+        {% else %}
+          <div style="font-size:11px;color:var(--text3);padding:12px 0">Sin tareas pendientes.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="col-6">
+      <div class="glow-card">
+        <div class="section-label">Campañas activas</div>
+        {% if campanas_activas %}
+          {% for c in campanas_activas[:6] %}
+          <div style="padding:7px 0;border-bottom:1px solid var(--dk-border);display:flex;justify-content:space-between;align-items:center">
+            <div style="font-size:12px;font-weight:500;color:var(--text1)">{{ c.nombre }}</div>
+            <span class="badge-green">Activa</span>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div style="font-size:11px;color:var(--text3);padding:12px 0">No hay campañas activas.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+
+{% if current_user.rol == 'admin' and current_user.id == 1 %}
+<div id="modal-logo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center">
+  <div class="glow-card" style="width:400px;max-width:90vw">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <span style="font-size:14px;font-weight:600;color:var(--text1)">Cambiar logo</span>
+      <button onclick="document.getElementById('modal-logo').style.display='none'" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px">✕</button>
+    </div>
+    <form method="POST" action="{{ url_for('inicio.cambiar_logo') }}" enctype="multipart/form-data">
+      <div style="margin-bottom:14px">
+        <label class="form-label">Seleccioná el nuevo logo</label>
+        <input class="dark-input" type="file" name="logo" accept="image/*" required>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button type="button" onclick="document.getElementById('modal-logo').style.display='none'" class="btn-glow btn-ghost">Cancelar</button>
+        <button type="submit" class="btn-glow btn-primary-glow">Subir logo</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+{% if current_user.rol == 'admin' and current_user.id != 1 %}
+<div id="modal-perm" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center">
+  <div class="glow-card" style="width:380px;max-width:90vw;text-align:center">
+    <div style="font-size:14px;font-weight:600;color:var(--text1);margin-bottom:8px">Sin permiso</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:18px">Solo el administrador principal puede cambiar el logo.</div>
+    <button onclick="document.getElementById('modal-perm').style.display='none'" class="btn-glow btn-primary-glow" style="width:100%;justify-content:center">Entendido</button>
+  </div>
+</div>
+{% endif %}
+
+<script>
+(function(){
+  var meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  var dias  = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];
+  var now   = new Date();
+  var str   = dias[now.getDay()] + ' ' + now.getDate() + ' ' + meses[now.getMonth()] + ' ' + now.getFullYear();
+  var el    = document.getElementById('fecha-hoy');
+  if(el) el.textContent = str;
+})();
+</script>
+{% endblock %}

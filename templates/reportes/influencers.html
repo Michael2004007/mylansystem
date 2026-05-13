@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}Reporte de Influencers{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Reporte de Influencers</div>
+      <div class="page-subtitle">{{ total }} influencers registrados</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <a href="{{ url_for('reportes.influencers_pdf', estado=filtro_estado) }}" class="btn-glow btn-danger-glow">📄 Descargar PDF</a>
+      <a href="{{ url_for('reportes.influencers_excel', estado=filtro_estado) }}" class="btn-glow btn-success-glow">📊 Descargar Excel</a>
+      <a href="{{ url_for('reportes.index') }}" class="btn-glow btn-ghost">← Volver</a>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="glow-card" style="margin-bottom:16px">
+    <form method="GET" style="display:flex;gap:10px;align-items:flex-end">
+      <div style="flex:1">
+        <label class="form-label">Estado</label>
+        <select class="dark-input" name="estado">
+          <option value="">Todos</option>
+          <option value="nuevo" {% if filtro_estado == 'nuevo' %}selected{% endif %}>Nuevos</option>
+          <option value="trabajaron" {% if filtro_estado == 'trabajaron' %}selected{% endif %}>Ya trabajaron</option>
+          <option value="sugerido" {% if filtro_estado == 'sugerido' %}selected{% endif %}>Sugeridos</option>
+        </select>
+      </div>
+      <button type="submit" class="btn-glow btn-primary-glow">Filtrar</button>
+    </form>
+  </div>
+
+  <!-- Estadísticas -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px">
+    <div class="stat-card">
+      <div class="sc-icon" style="background:rgba(59,130,246,.12);color:var(--blue2)">📊</div>
+      <div class="sc-val">{{ total }}</div>
+      <div class="sc-lbl">Total</div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-icon" style="background:rgba(16,185,129,.12);color:var(--green)">🆕</div>
+      <div class="sc-val">{{ nuevos }}</div>
+      <div class="sc-lbl">Nuevos</div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-icon" style="background:rgba(139,92,246,.12);color:var(--violet2)">✅</div>
+      <div class="sc-val">{{ trabajaron }}</div>
+      <div class="sc-lbl">Ya trabajaron</div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-icon" style="background:rgba(245,158,11,.12);color:var(--amber)">💡</div>
+      <div class="sc-val">{{ sugeridos }}</div>
+      <div class="sc-lbl">Sugeridos</div>
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  <div class="glow-card">
+    <table class="dark-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Handle</th>
+          <th>Instagram</th>
+          <th>WhatsApp</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in influencers %}
+        <tr>
+          <td style="color:var(--text3)">#{{ i.id }}</td>
+          <td style="color:var(--text1);font-weight:500">{{ i.nombre }}</td>
+          <td style="color:var(--blue2)">{{ i.handle or '—' }}</td>
+          <td style="font-size:11px">
+            {% if i.url_ig %}
+            <a href="{{ i.url_ig }}" target="_blank" style="color:var(--violet2);text-decoration:none">
+              🔗 Ver perfil
+            </a>
+            {% else %}—{% endif %}
+          </td>
+          <td style="font-size:11px;color:var(--text3)">{{ i.whatsapp or '—' }}</td>
+          <td>
+            {% if i.estado == 'nuevo' %}<span class="badge-blue">Nuevo</span>
+            {% elif i.estado == 'trabajaron' %}<span class="badge-green">Ya trabajó</span>
+            {% elif i.estado == 'sugerido' %}<span class="badge-violet">Sugerido</span>
+            {% else %}<span class="badge-gray">{{ i.estado }}</span>{% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align:center;color:var(--text3);padding:24px">No hay influencers que coincidan con los filtros.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

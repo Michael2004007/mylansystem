@@ -1,0 +1,150 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="topbar">
+  <div>
+    <div class="page-title">Venta #{{ venta.id }}</div>
+    <div class="page-subtitle">{{ venta.fecha }} — {{ venta.cliente_nombre }}</div>
+  </div>
+  <div style="display:flex;gap:8px">
+    <a href="{{ url_for('ecommerce.ventas') }}" class="btn-glow btn-ghost">← Volver</a>
+    <a href="{{ url_for('ecommerce.imprimir_venta', id=venta.id) }}" class="btn-glow btn-cyan-glow" target="_blank">🖨 Imprimir</a>
+  </div>
+</div>
+
+<div class="row g-3">
+
+  <!-- Detalle principal -->
+  <div class="col-8">
+    <div class="glow-card mb-3">
+      <div class="section-label mb-3">Productos del pedido</div>
+      <table class="dark-table">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>SKU</th>
+            <th>Cantidad</th>
+            <th>Precio unit.</th>
+            <th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in venta.items %}
+          <tr>
+            <td style="color:var(--text1);font-weight:500">{{ item.nombre }}</td>
+            <td style="color:var(--text3);font-size:11px">{{ item.sku }}</td>
+            <td style="color:var(--text2)">{{ item.cantidad }}</td>
+            <td style="color:var(--text2)">${{ item.precio_unit }}</td>
+            <td style="color:var(--green);font-weight:600">${{ item.subtotal }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4" style="text-align:right;color:var(--text3);font-size:11px;padding-top:12px">Subtotal:</td>
+            <td style="color:var(--text1);font-weight:600">${{ venta.subtotal }}</td>
+          </tr>
+          {% if venta.descuento %}
+          <tr>
+            <td colspan="4" style="text-align:right;color:var(--text3);font-size:11px">Descuento ({{ venta.codigo_afiliado }}):</td>
+            <td style="color:var(--amber)">-${{ venta.descuento }}</td>
+          </tr>
+          {% endif %}
+          <tr>
+            <td colspan="4" style="text-align:right;color:var(--text2);font-weight:700;font-size:14px">TOTAL:</td>
+            <td style="color:var(--green);font-weight:700;font-size:16px">${{ venta.total }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <!-- Timeline de estados -->
+    <div class="glow-card">
+      <div class="section-label mb-3">Seguimiento del pedido</div>
+      <div style="position:relative;padding-left:20px">
+        {% set estados = ['pendiente','confirmado','enviado','entregado'] %}
+        {% for estado in estados %}
+        {% set activo = loop.index <= estados.index(venta.estado) + 1 %}
+        <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:14px">
+          <div style="width:12px;height:12px;border-radius:50%;margin-top:2px;flex-shrink:0;
+            background:{% if activo %}var(--green){% else %}var(--dk-border2){% endif %};
+            box-shadow:{% if activo %}0 0 8px var(--green){% else %}none{% endif %}"></div>
+          <div>
+            <div style="font-size:12px;font-weight:500;color:{% if activo %}var(--text1){% else %}var(--text3){% endif %}">
+              {{ estado|capitalize }}
+            </div>
+            {% if activo and venta.fechas_estado %}
+            <div style="font-size:10px;color:var(--text3)">{{ venta.fechas_estado.get(estado, '') }}</div>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Cambiar estado -->
+      <form method="POST" action="{{ url_for('ecommerce.cambiar_estado_venta', id=venta.id) }}" style="margin-top:10px;display:flex;gap:8px">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <select class="dark-input" name="estado" style="flex:1">
+          <option value="pendiente" {% if venta.estado=='pendiente' %}selected{% endif %}>Pendiente</option>
+          <option value="confirmado" {% if venta.estado=='confirmado' %}selected{% endif %}>Confirmado</option>
+          <option value="enviado" {% if venta.estado=='enviado' %}selected{% endif %}>Enviado</option>
+          <option value="entregado" {% if venta.estado=='entregado' %}selected{% endif %}>Entregado</option>
+          <option value="cancelado" {% if venta.estado=='cancelado' %}selected{% endif %}>Cancelado</option>
+        </select>
+        <button type="submit" class="btn-glow btn-primary-glow">Actualizar</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Panel lateral -->
+  <div class="col-4">
+
+    <!-- Cliente -->
+    <div class="glow-card mb-3">
+      <div class="section-label mb-2">Cliente</div>
+      <div style="font-size:13px;font-weight:600;color:var(--text1)">{{ venta.cliente_nombre }}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:3px">{{ venta.cliente_email }}</div>
+      <div style="font-size:11px;color:var(--text3)">{{ venta.cliente_telefono }}</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:8px">{{ venta.cliente_direccion }}</div>
+    </div>
+
+    <!-- Afiliado -->
+    {% if venta.codigo_afiliado %}
+    <div class="glow-card mb-3">
+      <div class="section-label mb-2">Afiliado</div>
+      <div style="background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.25);border-radius:8px;padding:8px 12px">
+        <div style="font-size:10px;color:var(--text3)">Código usado</div>
+        <div style="font-size:14px;font-weight:700;color:#67e8f9;letter-spacing:.1em">{{ venta.codigo_afiliado }}</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:4px">Influencer: {{ venta.influencer_nombre }}</div>
+        <div style="font-size:11px;color:var(--amber);margin-top:2px">Comisión: ${{ venta.comision_generada }}</div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Resumen financiero -->
+    <div class="glow-card mb-3">
+      <div class="section-label mb-2">Resumen</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:6px">
+        Estado: <span class="badge-glow {% if venta.estado=='entregado' %}badge-green{% elif venta.estado=='cancelado' %}badge-red{% else %}badge-amber{% endif %}">{{ venta.estado|capitalize }}</span>
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:6px">
+        Método pago: <strong style="color:var(--text1)">{{ venta.metodo_pago }}</strong>
+      </div>
+      <div style="font-size:12px;color:var(--text2)">
+        Total: <strong style="color:var(--green);font-size:16px">${{ venta.total }}</strong>
+      </div>
+    </div>
+
+    <!-- Notas -->
+    <div class="glow-card">
+      <div class="section-label mb-2">Notas internas</div>
+      <form method="POST" action="{{ url_for('ecommerce.guardar_nota_venta', id=venta.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <textarea class="dark-input" name="nota" rows="3" placeholder="Agregar nota...">{{ venta.nota or '' }}</textarea>
+        <button type="submit" class="btn-glow btn-ghost" style="margin-top:8px;width:100%">Guardar nota</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}Mi Perfil{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Mi perfil</div>
+      <div class="page-subtitle">{{ current_user.email }}</div>
+    </div>
+  </div>
+
+  <div class="glow-card" style="max-width:600px">
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div style="margin-bottom:12px">
+        <label class="form-label">Nombre completo *</label>
+        <input class="dark-input" type="text" name="nombre" required
+               value="{{ usuario.nombre }}" placeholder="Nombre completo">
+      </div>
+
+      <div style="margin-bottom:12px">
+        <label class="form-label">Email *</label>
+        <input class="dark-input" type="email" name="email" required
+               value="{{ usuario.email }}" placeholder="correo@ejemplo.com">
+      </div>
+
+      <div style="border-top:1px solid var(--dk-border);margin:20px 0;padding-top:20px">
+        <div class="section-label" style="margin-bottom:12px">Cambiar contraseña (opcional)</div>
+        
+        <div style="margin-bottom:12px">
+          <label class="form-label">Contraseña actual</label>
+          <input class="dark-input" type="password" name="password_actual" 
+                 placeholder="Tu contraseña actual">
+        </div>
+
+        <div class="form-grid" style="margin-bottom:12px">
+          <div>
+            <label class="form-label">Nueva contraseña</label>
+            <input class="dark-input" type="password" name="password_nueva" 
+                   placeholder="Mínimo 6 caracteres">
+          </div>
+          <div>
+            <label class="form-label">Confirmar nueva contraseña</label>
+            <input class="dark-input" type="password" name="password_confirmar" 
+                   placeholder="Repetí la contraseña">
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:20px">
+        <button type="submit" class="btn-glow btn-primary-glow">Guardar cambios</button>
+        <a href="{{ url_for('inicio.index') }}" class="btn-glow btn-ghost">Volver</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

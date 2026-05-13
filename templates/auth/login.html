@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block title %}Login{% endblock %}
+
+{% block content_unauth %}
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--dk-bg);position:relative;overflow:hidden">
+
+  <div style="position:absolute;top:-120px;right:-120px;width:400px;height:400px;background:radial-gradient(circle,rgba(99,102,241,.12),transparent);border-radius:50%;animation:floatBg 8s ease-in-out infinite"></div>
+  <div style="position:absolute;bottom:-100px;left:-80px;width:350px;height:350px;background:radial-gradient(circle,rgba(6,182,212,.08),transparent);border-radius:50%;animation:floatBg 10s ease-in-out infinite reverse"></div>
+  <div style="position:absolute;top:50%;left:50%;width:500px;height:500px;background:radial-gradient(circle,rgba(139,92,246,.06),transparent);border-radius:50%;transform:translate(-50%,-50%);animation:pulse 6s ease-in-out infinite"></div>
+
+  <div style="position:fixed;top:16px;right:16px;z-index:10">
+    <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn" title="Cambiar tema">🌙</button>
+  </div>
+
+  <div style="width:100%;max-width:400px;padding:16px;position:relative;z-index:5">
+
+    <div style="text-align:center;margin-bottom:28px">
+      <div class="login-logo-wrapper">
+        <div class="login-logo-ring"></div>
+        <div class="login-logo-ring ring2"></div>
+        <div class="login-logo-container">
+          {% if logo_ruta %}
+            <img src="{{ url_for('static', filename=logo_ruta) }}" alt="Logo"
+                 style="width:130px;height:130px;object-fit:contain;border-radius:50%">
+          {% else %}
+            <div style="font-size:42px;font-weight:800;color:var(--blue2)">M</div>
+          {% endif %}
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.12em;margin-top:18px">Marketing System</div>
+    </div>
+
+    <div class="glow-card login-card">
+      <div style="font-size:16px;font-weight:600;color:var(--text1);margin-bottom:6px;text-align:center">Bienvenido</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:20px;text-align:center">Ingresá tus credenciales para continuar</div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          <div style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:8px 12px;font-size:12px;color:#fca5a5;margin-bottom:12px">{{ message }}</div>
+        {% endfor %}
+      {% endwith %}
+
+      <form method="POST" action="{{ url_for('auth.login') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div style="margin-bottom:14px">
+          <label class="form-label">Email</label>
+          <div style="position:relative">
+            <span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px">✉</span>
+            <input class="dark-input" type="email" name="email" placeholder="tu@email.com" required autofocus style="padding-left:32px">
+          </div>
+        </div>
+        <div style="margin-bottom:20px">
+          <label class="form-label">Contraseña</label>
+          <div style="position:relative">
+            <span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px">🔒</span>
+            <input class="dark-input" type="password" name="password" placeholder="••••••••" required style="padding-left:32px">
+          </div>
+        </div>
+        <button type="submit" class="btn-glow btn-primary-glow login-btn">
+          Entrar
+        </button>
+      </form>
+    </div>
+
+    <div style="text-align:center;margin-top:16px;font-size:10px;color:var(--text3);letter-spacing:.05em">
+      © 2025 Mylan · Todos los derechos reservados
+    </div>
+  </div>
+</div>
+
+<style>
+.login-logo-wrapper{
+  position:relative;width:200px;height:200px;margin:0 auto;
+  display:flex;align-items:center;justify-content:center;
+}
+.login-logo-ring{
+  position:absolute;inset:0;border-radius:50%;
+  border:2px solid transparent;
+  border-top-color:var(--blue2);
+  border-right-color:rgba(99,102,241,.4);
+  animation:spinRing 3s linear infinite;
+}
+.login-logo-ring.ring2{
+  inset:10px;
+  border-top-color:var(--violet2);
+  border-right-color:rgba(6,182,212,.3);
+  animation:spinRing 4s linear infinite reverse;
+}
+.login-logo-container{
+  width:155px;height:155px;border-radius:50%;
+  background:linear-gradient(135deg,rgba(37,99,235,.2),rgba(139,92,246,.15));
+  border:1px solid rgba(59,130,246,.3);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 60px rgba(59,130,246,.4),0 0 120px rgba(139,92,246,.25),0 0 30px rgba(6,182,212,.2);
+  overflow:hidden;position:relative;z-index:2;
+}
+.login-card{
+  background:var(--dk-card) !important;
+  border:1px solid var(--dk-border2) !important;
+  border-radius:16px !important;padding:24px !important;
+  box-shadow:0 8px 32px rgba(0,0,0,.3),0 0 40px rgba(59,130,246,.05);
+}
+.login-btn{
+  width:100%;justify-content:center;display:flex;
+  padding:10px 16px !important;font-size:13px !important;
+  font-weight:600 !important;letter-spacing:.04em;
+  border-radius:10px !important;position:relative;overflow:hidden;
+}
+.login-btn::after{
+  content:'';position:absolute;top:0;left:-100%;
+  width:100%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);
+  animation:shimmer 3s ease-in-out infinite;
+}
+@keyframes spinRing{to{transform:rotate(360deg)}}
+@keyframes floatBg{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,-20px)}}
+@keyframes pulse{0%,100%{opacity:.4;transform:translate(-50%,-50%) scale(1)}50%{opacity:.7;transform:translate(-50%,-50%) scale(1.05)}}
+@keyframes shimmer{0%{left:-100%}50%,100%{left:100%}}
+</style>
+{% endblock %}
