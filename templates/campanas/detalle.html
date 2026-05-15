@@ -26,30 +26,30 @@
   <div class="glow-card" style="margin-bottom:14px">
     <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px">
       <div>
-        <div style="font-size:10px;color:var(--text3)">Presupuesto total</div>
+        <div style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:0.05em">Presupuesto total</div>
         <div style="font-size:18px;font-weight:700;color:var(--blue2)">${{ '{:,.0f}'.format(campana.presupuesto) }}</div>
       </div>
       <div>
-        <div style="font-size:10px;color:var(--text3)">Gastado</div>
+        <div style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:0.05em">Gastado</div>
         <div style="font-size:18px;font-weight:700;color:var(--amber)">${{ '{:,.0f}'.format(campana.gastado) }}</div>
       </div>
       <div>
-        <div style="font-size:10px;color:var(--text3)">Disponible</div>
+        <div style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:0.05em">Disponible</div>
         <div style="font-size:18px;font-weight:700;color:var(--green)">${{ '{:,.0f}'.format(campana.presupuesto - campana.gastado) }}</div>
       </div>
       <div>
-        <div style="font-size:10px;color:var(--text3)">Influencers</div>
+        <div style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:0.05em">Influencers</div>
         <div style="font-size:18px;font-weight:700;color:var(--text1)">{{ colaboraciones | length }}</div>
       </div>
       <div>
-        <div style="font-size:10px;color:var(--text3)">Hitos pendientes</div>
+        <div style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:0.05em">Hitos pendientes</div>
         <div style="font-size:18px;font-weight:700;color:var(--text1)">{{ hitos | selectattr('estado', 'equalto', 'pendiente') | list | length }}</div>
       </div>
     </div>
     <div style="margin-top:12px">
-      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-bottom:4px">
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-bottom:4px;font-weight:600">
         <span>Ejecución presupuesto</span>
-        <span style="color:var(--blue2);font-weight:600">{{ pct }}%</span>
+        <span style="color:var(--blue2);font-weight:700">{{ pct }}%</span>
       </div>
       <div class="progress-dark">
         <div class="progress-fill {% if pct >= 80 %}progress-amber{% else %}progress-green{% endif %}" style="width:{{ pct }}%"></div>
@@ -82,10 +82,10 @@
             <div style="font-size:10px;color:var(--text2);margin-top:2px">{{ col.detalle }}</div>
             {% endif %}
             {% if col.permuta_tag %}
-            <div style="font-size:10px;color:var(--cyan);margin-top:2px">Permuta: {{ col.permuta_tag }}</div>
+            <div style="font-size:10px;color:var(--cyan);margin-top:2px;font-weight:500">Permuta: {{ col.permuta_tag }}</div>
             {% endif %}
             {% if col.fecha_entrega %}
-            <div style="font-size:10px;color:var(--text3)">Entrega: {{ col.fecha_entrega }}</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:2px">Entrega: {{ col.fecha_entrega }}</div>
             {% endif %}
           </div>
           <div style="text-align:right;flex-shrink:0;margin-left:8px">
@@ -99,9 +99,8 @@
                       onclick="abrirEditarColab({{ col.id }}, '{{ col.tipo_pago or 'efectivo' }}', {{ col.monto or 0 }}, '{{ col.detalle or '' }}', '{{ col.fecha_entrega or '' }}', '{{ col.permuta_tag or '' }}')">
                 Editar
               </button>
-              <a href="{{ url_for('campanas.eliminar_colaboracion', colab_id=col.id) }}"
-                 class="btn-glow btn-danger-glow" style="font-size:9px;padding:3px 8px"
-                 onclick="return confirm('¿Eliminar esta colaboración?')">✕</a>
+              <button class="btn-glow btn-danger-glow" style="font-size:9px;padding:3px 8px"
+                      onclick="confirmarEliminarColaboracion('{{ col.id }}', '{{ col.influencer_nombre or 'esta colaboración' }}')">✕</button>
             </div>
           </div>
         </div>
@@ -123,8 +122,16 @@
 
       {% if hitos %}
       {% for h in hitos %}
-      <div class="glow-card" style="margin-bottom:8px;padding:12px 14px;{% if h.estado == 'hecho' %}opacity:.6;{% endif %}">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+      <div class="glow-card" style="margin-bottom:8px;padding:12px 14px;{% if h.estado == 'hecho' %}opacity:.6;{% endif %}position:relative;overflow:hidden">
+
+        <!-- Marca de agua POSTERGADO para hitos con historial -->
+        {% if h.historial_postergaciones and h.historial_postergaciones|length > 0 %}
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-25deg);font-size:32px;font-weight:900;color:rgba(245,158,11,.08);letter-spacing:4px;pointer-events:none;white-space:nowrap;z-index:0">
+          POSTERGADO
+        </div>
+        {% endif %}
+
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;position:relative;z-index:1">
           <div style="flex:1">
             <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
               {% if h.estado == 'hecho' %}<span style="font-size:12px">✅</span>
@@ -133,24 +140,53 @@
               <div style="font-size:12px;font-weight:600;color:var(--text1)">{{ h.titulo }}</div>
             </div>
             {% if h.lugar %}
-            <div style="font-size:10px;color:var(--text3)">📍 {{ h.lugar }}</div>
+            <div style="font-size:10px;color:var(--text2);margin-top:2px;font-weight:500">📍 {{ h.lugar }}</div>
             {% endif %}
-            <div style="font-size:10px;color:var(--text3)">
+
+            <!-- Fecha ACTUAL (la más reciente) -->
+            <div style="font-size:10px;color:{% if h.estado == 'postergado' %}var(--amber){% else %}var(--text2){% endif %};font-weight:{% if h.estado == 'postergado' %}600{% else %}500{% endif %};margin-top:2px">
               🗓 {{ h.fecha_hora.strftime('%d/%m/%Y %H:%M') if h.fecha_hora is not string else h.fecha_hora }}
+              {% if h.estado == 'postergado' %}<span style="margin-left:4px;font-size:9px;color:var(--amber);font-weight:700">(Nueva fecha)</span>{% endif %}
             </div>
+
+            <!-- Historial de postergaciones (fechas anteriores) -->
+            {% if h.historial_postergaciones and h.historial_postergaciones|length > 0 %}
+            <div style="margin-top:8px;padding-top:8px;border-top:1px dashed rgba(245,158,11,.3)">
+              <div style="font-size:9px;color:var(--text2);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">
+                📜 Historial de postergaciones
+              </div>
+              {% for post in h.historial_postergaciones|reverse %}
+              <div style="font-size:9px;color:var(--text1);padding:4px 8px;margin-bottom:3px;background:rgba(245,158,11,.08);border-left:2px solid rgba(245,158,11,.4);border-radius:4px">
+                <span style="text-decoration:line-through;color:var(--text2);font-weight:500">
+                  {{ post.fecha_anterior.strftime('%d/%m/%Y %H:%M') if post.fecha_anterior is not string else post.fecha_anterior }}
+                </span>
+                <span style="margin:0 4px;color:var(--amber);font-weight:700">→</span>
+                <span style="color:var(--text1);font-weight:600">
+                  {{ post.fecha_nueva.strftime('%d/%m/%Y %H:%M') if post.fecha_nueva is not string else post.fecha_nueva }}
+                </span>
+                {% if post.motivo %}
+                <div style="margin-top:3px;font-style:italic;color:var(--text2);font-weight:500">
+                  💬 {{ post.motivo }}
+                </div>
+                {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+            {% endif %}
+
             {% if h.descripcion %}
-            <div style="font-size:10px;color:var(--text2);margin-top:2px">{{ h.descripcion }}</div>
+            <div style="font-size:10px;color:var(--text2);margin-top:4px;font-weight:500">{{ h.descripcion }}</div>
             {% endif %}
           </div>
+
           {% if h.estado == 'pendiente' %}
           <div style="display:flex;flex-direction:column;gap:3px;flex-shrink:0">
             <a href="{{ url_for('campanas.hito_hecho', hito_id=h.id) }}"
                class="btn-glow btn-success-glow" style="font-size:9px;padding:3px 7px">✓ Hecho</a>
             <button class="btn-glow btn-ghost" style="font-size:9px;padding:3px 7px"
                     onclick="abrirPostergar({{ h.id }})">📆 Postergar</button>
-            <a href="{{ url_for('campanas.hito_eliminar', hito_id=h.id) }}"
-               class="btn-glow btn-danger-glow" style="font-size:9px;padding:3px 7px"
-               onclick="return confirm('¿Eliminar este hito?')">✕</a>
+            <button class="btn-glow btn-danger-glow" style="font-size:9px;padding:3px 7px"
+                    onclick="confirmarEliminarHito('{{ h.id }}', '{{ h.titulo }}')">✕</button>
           </div>
           {% elif h.estado == 'postergado' %}
           <div style="display:flex;flex-direction:column;gap:3px;flex-shrink:0">
@@ -158,9 +194,8 @@
                class="btn-glow btn-success-glow" style="font-size:9px;padding:3px 7px">✓ Hecho</a>
             <button class="btn-glow btn-ghost" style="font-size:9px;padding:3px 7px"
                     onclick="abrirPostergar({{ h.id }})">📆 Re-postergar</button>
-            <a href="{{ url_for('campanas.hito_eliminar', hito_id=h.id) }}"
-               class="btn-glow btn-danger-glow" style="font-size:9px;padding:3px 7px"
-               onclick="return confirm('¿Eliminar este hito?')">✕</a>
+            <button class="btn-glow btn-danger-glow" style="font-size:9px;padding:3px 7px"
+                    onclick="confirmarEliminarHito('{{ h.id }}', '{{ h.titulo }}')">✕</button>
           </div>
           {% endif %}
         </div>
@@ -387,8 +422,14 @@
     </div>
     <form method="POST" id="form-postergar">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <div style="margin-bottom:12px"><input class="dark-input" type="datetime-local" name="nueva_fecha" required></div>
-      <div style="margin-bottom:16px"><textarea class="dark-input" name="motivo" required placeholder="Motivo"></textarea></div>
+      <div style="margin-bottom:12px">
+        <label class="form-label">Nueva fecha</label>
+        <input class="dark-input" type="datetime-local" name="nueva_fecha" required>
+      </div>
+      <div style="margin-bottom:16px">
+        <label class="form-label">Motivo de la postergación</label>
+        <textarea class="dark-input" name="motivo" required placeholder="Explica el motivo del cambio de fecha..." style="min-height:70px;resize:vertical"></textarea>
+      </div>
       <div style="display:flex;gap:8px;justify-content:flex-end">
         <button type="button" onclick="document.getElementById('modal-postergar').style.display='none'" class="btn-glow btn-ghost">Cancelar</button>
         <button type="submit" class="btn-glow btn-primary-glow">Confirmar</button>
@@ -460,6 +501,30 @@ function abrirEditarColab(id, tipoPago, monto, detalle, fechaEntrega, permutaTag
 function abrirPostergar(hitoId) {
   document.getElementById('form-postergar').action = '/campanas/hito/' + hitoId + '/postergar';
   document.getElementById('modal-postergar').style.display = 'flex';
+}
+
+// Confirmar eliminar colaboración
+function confirmarEliminarColaboracion(colabId, nombreInfluencer) {
+  confirmAction({
+    type: 'danger',
+    icon: '⚠️',
+    title: 'Eliminar Colaboración',
+    text: 'Estás a punto de eliminar la colaboración con <strong>' + nombreInfluencer + '</strong>. Esta acción no se puede deshacer y se perderán todos los datos asociados.',
+    confirmText: 'Sí, eliminar',
+    url: '/campanas/colaboracion/' + colabId + '/eliminar'
+  });
+}
+
+// Confirmar eliminar hito
+function confirmarEliminarHito(hitoId, tituloHito) {
+  confirmAction({
+    type: 'danger',
+    icon: '🗑️',
+    title: 'Eliminar Hito',
+    text: 'Estás a punto de eliminar el hito <strong>"' + tituloHito + '"</strong>. Esta acción es permanente y se perderá todo el historial de postergaciones asociado.',
+    confirmText: 'Eliminar hito',
+    url: '/campanas/hito/' + hitoId + '/eliminar'
+  });
 }
 
 // Inicializar botón IG al cargar
