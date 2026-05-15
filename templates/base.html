@@ -1,307 +1,345 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}MYLAN{% endblock %} - Marketing System</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+{% extends 'base.html' %}
+{% block title %}Ecommerce{% endblock %}
 
-  <!-- APLICAR TEMA ANTES DE RENDERIZAR -->
-  <script>
-    (function(){
-      try{
-        if(localStorage.getItem('mylan-theme')==='light'){
-          document.documentElement.classList.add('light-mode-pre');
-        }
-      }catch(e){}
-    })();
-  </script>
+{% block content %}
+<style>
+.modal-overlay {
+  visibility: hidden;
+  opacity: 0;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.6);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity .15s, visibility .15s;
+}
+.modal-overlay.activo {
+  visibility: visible;
+  opacity: 1;
+}
+</style>
 
-  <style>
-    :root{
-      --dk-bg:#080e1a;
-      --dk-surface:#0d1526;
-      --dk-card:#111d35;
-      --dk-card2:#0f1a2e;
-      --dk-border:#1e2d4a;
-      --dk-border2:#253857;
-      --blue:#3b82f6;
-      --blue2:#60a5fa;
-      --cyan:#06b6d4;
-      --violet:#8b5cf6;
-      --violet2:#a78bfa;
-      --green:#10b981;
-      --amber:#f59e0b;
-      --red:#ef4444;
-      --text1:#e2e8f0;
-      --text2:#94a3b8;
-      --text3:#64748b;
-    }
-    body.light-mode, html.light-mode-pre body{
-      --dk-bg:#f0f4f8;
-      --dk-surface:#ffffff;
-      --dk-card:#ffffff;
-      --dk-card2:#f8fafc;
-      --dk-border:#e2e8f0;
-      --dk-border2:#cbd5e1;
-      --text1:#0f172a;
-      --text2:#475569;
-      --text3:#94a3b8;
-    }
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{background:var(--dk-bg);font-family:'Segoe UI',system-ui,sans-serif;color:var(--text1)}
-    .sys{display:flex;height:100vh;min-height:580px;background:var(--dk-bg);overflow:hidden}
-    .sidebar{width:210px;background:var(--dk-surface);border-right:1px solid var(--dk-border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
-    .sidebar::-webkit-scrollbar{width:3px}
-    .sidebar::-webkit-scrollbar-thumb{background:var(--dk-border2);border-radius:2px}
-    .sb-logo{padding:14px 16px;border-bottom:1px solid var(--dk-border);display:flex;align-items:center;justify-content:space-between}
-    .sb-logo .brand{font-size:18px;font-weight:700;background:linear-gradient(135deg,var(--blue2),var(--violet2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:1px}
-    .sb-logo .sub{font-size:9px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-top:1px}
-    .sb-logo-circle{width:38px;height:38px;border-radius:50%;border:1.5px solid rgba(59,130,246,.4);overflow:hidden;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(37,99,235,.2),rgba(139,92,246,.15));box-shadow:0 0 14px rgba(59,130,246,.15);flex-shrink:0;transition:box-shadow .2s,border-color .2s}
-    .sb-logo-circle:hover{box-shadow:0 0 20px rgba(59,130,246,.3);border-color:rgba(59,130,246,.6)}
-    .sb-logo-circle img{width:30px;height:30px;object-fit:contain;border-radius:50%}
-    .sb-section{font-size:9px;color:var(--text3);padding:12px 16px 3px;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
-    .sb-item{display:flex;align-items:center;gap:9px;padding:7px 16px;font-size:12px;color:var(--text2);cursor:pointer;border-left:2px solid transparent;transition:all .18s;white-space:nowrap;text-decoration:none}
-    .sb-item:hover{color:var(--text1);background:rgba(59,130,246,.07);border-left-color:var(--blue)}
-    .sb-item.active{color:var(--blue2);background:rgba(59,130,246,.12);border-left-color:var(--blue);font-weight:500}
-    .sb-item .ico{width:15px;text-align:center;font-size:12px}
-    .main{flex:1;overflow-y:auto;background:var(--dk-bg)}
-    .main::-webkit-scrollbar{width:4px}
-    .main::-webkit-scrollbar-thumb{background:var(--dk-border2);border-radius:2px}
-    .page{padding:20px}
-    .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
-    .page-title{font-size:20px;font-weight:600;color:var(--text1);letter-spacing:.02em}
-    .page-subtitle{font-size:11px;color:var(--text3);margin-top:2px}
-    .glow-card{background:var(--dk-card);border:1px solid var(--dk-border);border-radius:14px;padding:16px;position:relative;overflow:hidden;transition:border-color .2s,box-shadow .2s}
-    .glow-card:hover{border-color:var(--dk-border2);box-shadow:0 0 20px rgba(59,130,246,.08)}
-    .glow-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(59,130,246,.4),transparent);opacity:0;transition:opacity .2s}
-    .glow-card:hover::before{opacity:1}
-    .stat-card{background:var(--dk-card);border:1px solid var(--dk-border);border-radius:12px;padding:14px 16px;position:relative;overflow:hidden;transition:all .2s}
-    .stat-card:hover{border-color:var(--dk-border2);transform:translateY(-1px)}
-    .stat-card .sc-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;margin-bottom:10px}
-    .stat-card .sc-val{font-size:22px;font-weight:700;color:var(--text1);line-height:1}
-    .stat-card .sc-lbl{font-size:11px;color:var(--text3);margin-top:4px}
-    .btn-glow{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;font-size:12px;font-weight:500;border-radius:8px;border:none;cursor:pointer;transition:all .22s;letter-spacing:.02em;text-decoration:none}
-    .btn-primary-glow{background:linear-gradient(135deg,#2563eb,#4f46e5);color:#fff;box-shadow:0 2px 12px rgba(79,70,229,.35)}
-    .btn-primary-glow:hover{background:linear-gradient(135deg,#3b82f6,#6366f1);box-shadow:0 4px 20px rgba(99,102,241,.5);transform:translateY(-1px);color:#fff}
-    .btn-primary-glow:active{transform:translateY(0)}
-    .btn-ghost{background:rgba(255,255,255,.04);color:var(--text2);border:1px solid var(--dk-border2)}
-    .btn-ghost:hover{background:rgba(255,255,255,.08);color:var(--text1)}
-    .btn-danger-glow{background:rgba(239,68,68,.12);color:#fca5a5;border:1px solid rgba(239,68,68,.25)}
-    .btn-danger-glow:hover{background:rgba(239,68,68,.22);box-shadow:0 0 12px rgba(239,68,68,.25)}
-    .btn-success-glow{background:rgba(16,185,129,.12);color:#6ee7b7;border:1px solid rgba(16,185,129,.25)}
-    .btn-success-glow:hover{background:rgba(16,185,129,.22);box-shadow:0 0 12px rgba(16,185,129,.25)}
-    .btn-warn-glow{background:rgba(245,158,11,.12);color:#fcd34d;border:1px solid rgba(245,158,11,.25)}
-    .btn-warn-glow:hover{background:rgba(245,158,11,.22);box-shadow:0 0 12px rgba(245,158,11,.25)}
-    .btn-cyan-glow{background:rgba(6,182,212,.15);color:#67e8f9;border:1px solid rgba(6,182,212,.3)}
-    .btn-cyan-glow:hover{background:rgba(6,182,212,.25);border-color:rgba(6,182,212,.5)}
-    .dark-input{background:var(--dk-card2);border:1px solid var(--dk-border);border-radius:8px;color:var(--text1);font-size:12px;padding:7px 11px;width:100%;transition:border-color .15s,box-shadow .15s;outline:none}
-    .dark-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,130,246,.15)}
-    .dark-input::placeholder{color:var(--text3)}
-    select.dark-input option{background:var(--dk-card);color:var(--text1)}
-    .form-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;display:block}
-    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .form-grid.three{grid-template-columns:1fr 1fr 1fr}
-    .dark-table{width:100%;border-collapse:collapse;font-size:12px}
-    .dark-table th{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;padding:8px 10px;border-bottom:1px solid var(--dk-border);text-align:left}
-    .dark-table td{padding:9px 10px;border-bottom:1px solid rgba(30,45,74,.6);color:var(--text2);vertical-align:middle}
-    .dark-table tr:last-child td{border-bottom:none}
-    .dark-table tbody tr:hover{background:rgba(59,130,246,.04)}
-    .filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
-    .filter-bar .dark-input{width:auto;flex:1;min-width:120px}
-    .badge-green{background:rgba(16,185,129,.15);color:#6ee7b7;border:1px solid rgba(16,185,129,.3);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;display:inline-block}
-    .badge-red{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;display:inline-block}
-    .badge-amber{background:rgba(245,158,11,.15);color:#fcd34d;border:1px solid rgba(245,158,11,.3);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;display:inline-block}
-    .badge-blue{background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid rgba(59,130,246,.3);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;display:inline-block}
-    .badge-gray{background:rgba(100,116,139,.15);color:var(--text3);border:1px solid rgba(100,116,139,.3);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;display:inline-block}
-    .badge-violet{background:rgba(139,92,246,.15);color:#c4b5fd;border:1px solid rgba(139,92,246,.3);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;display:inline-block}
-    .badge-cyan{background:rgba(6,182,212,.15);color:#67e8f9;border:1px solid rgba(6,182,212,.3);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;display:inline-block}
-    .alert-flash{margin:12px 20px 0;padding:10px 14px;border-radius:8px;font-size:12px}
-    .alert-success{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:#6ee7b7}
-    .alert-error{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#fca5a5}
-    .alert-warning{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);color:#fcd34d}
-    .progress-dark{height:6px;background:var(--dk-border);border-radius:3px;overflow:hidden}
-    .progress-fill{height:100%;border-radius:3px;transition:width .4s}
-    .progress-green{background:linear-gradient(90deg,var(--green),#34d399)}
-    .progress-amber{background:linear-gradient(90deg,var(--amber),#fbbf24)}
-    .progress-red{background:linear-gradient(90deg,var(--red),#f87171)}
-    .section-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
-    .tab-link{padding:6px 14px;font-size:12px;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-1px;text-decoration:none;transition:all .15s;font-weight:500;display:inline-block}
-    .tab-link:hover{color:var(--text2)}
-    .tab-link.active{color:var(--blue2);border-bottom-color:var(--blue);background:rgba(59,130,246,.04)}
-    .theme-toggle{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;border:1px solid var(--dk-border2);background:rgba(255,255,255,.05);cursor:pointer;font-size:15px;transition:all .2s;flex-shrink:0}
-    .theme-toggle:hover{background:rgba(59,130,246,.12);border-color:var(--blue)}
-    .modal-confirm-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:3000;align-items:center;justify-content:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-    .modal-confirm-overlay.open{display:flex}
-    .modal-confirm-box{background:var(--dk-card);border:1px solid var(--dk-border2);border-radius:20px;padding:30px 28px 24px;width:410px;max-width:92vw;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.05);animation:scaleInModal .2s cubic-bezier(.34,1.56,.64,1)}
-    .modal-confirm-icon{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 18px}
-    .modal-confirm-title{font-size:16px;font-weight:600;color:var(--text1);margin-bottom:8px}
-    .modal-confirm-text{font-size:12px;color:var(--text2);margin-bottom:24px;line-height:1.65}
-    .modal-confirm-text strong{color:var(--text1)}
-    .modal-confirm-btns{display:flex;gap:10px;justify-content:center}
-    .modal-confirm-btns .btn-glow{padding:9px 22px;font-size:12px;font-weight:500}
-    @keyframes fadeInModal{from{opacity:0}to{opacity:1}}
-    @keyframes scaleInModal{from{transform:scale(.88) translateY(8px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
-  </style>
-</head>
-<body>
+<div class="page">
 
-{% if current_user.is_authenticated %}
-<div class="sys">
-
-  <div class="sidebar">
-    <div class="sb-logo">
-      <a href="{{ url_for('inicio.index') }}" style="display:flex;align-items:center;gap:10px;text-decoration:none;flex:1">
-        {% if logo_ruta %}
-          <div class="sb-logo-circle">
-            <img src="{{ url_for('static', filename=logo_ruta) }}" alt="Logo">
-          </div>
-          <div>
-            <div style="font-size:12px;font-weight:600;color:var(--text1)">Mylan</div>
-            <div class="sub">Marketing</div>
-          </div>
-        {% else %}
-          <div>
-            <div class="brand">MYLAN</div>
-            <div class="sub">Marketing System</div>
-          </div>
-        {% endif %}
-      </a>
-      <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn" title="Cambiar tema">🌙</button>
+  <div class="topbar">
+    <div>
+      <div class="page-title">Ecommerce — Ventas</div>
+      <div class="page-subtitle">Ventas por influencer con códigos de afiliado</div>
     </div>
-
-    <div class="sb-section">General</div>
-    {% if tiene_permiso('inicio') %}
-    <a class="sb-item {% if request.blueprint == 'inicio' %}active{% endif %}" href="{{ url_for('inicio.index') }}">
-      <span class="ico">◈</span> Inicio
-    </a>
-    {% endif %}
-
-    <div class="sb-section">Gestión</div>
-    {% if tiene_permiso('tareas') %}
-    <a class="sb-item {% if request.blueprint == 'tareas' %}active{% endif %}" href="{{ url_for('tareas.index') }}">
-      <span class="ico">✓</span> Tareas
-    </a>
-    {% endif %}
-    {% if tiene_permiso('campanas') %}
-    <a class="sb-item {% if request.blueprint == 'campanas' %}active{% endif %}" href="{{ url_for('campanas.index') }}">
-      <span class="ico">◎</span> Campañas
-    </a>
-    {% endif %}
-    {% if tiene_permiso('calendario') %}
-    <a class="sb-item {% if request.blueprint == 'calendario' %}active{% endif %}" href="{{ url_for('calendario.index') }}">
-      <span class="ico">▦</span> Calendario
-    </a>
-    {% endif %}
-
-    <div class="sb-section">Influencers</div>
-    {% if tiene_permiso('influencers') %}
-    <a class="sb-item {% if request.blueprint == 'influencers' %}active{% endif %}" href="{{ url_for('influencers.index') }}">
-      <span class="ico">★</span> Influencers
-    </a>
-    {% endif %}
-
-    <div class="sb-section">Ventas</div>
-    {% if tiene_permiso('ecommerce') %}
-    <a class="sb-item {% if request.blueprint == 'ecommerce' %}active{% endif %}" href="{{ url_for('ecommerce.index') }}">
-      <span class="ico">◆</span> Ecommerce
-    </a>
-    {% endif %}
-
-    <div class="sb-section">Admin</div>
-    {% if tiene_permiso('reportes') %}
-    <a class="sb-item {% if request.blueprint == 'reportes' %}active{% endif %}" href="{{ url_for('reportes.index') }}">
-      <span class="ico">≡</span> Reportes
-    </a>
-    {% endif %}
-    {% if current_user.es_admin() %}
-    <a class="sb-item {% if request.blueprint == 'usuarios' %}active{% endif %}" href="{{ url_for('usuarios.index') }}">
-      <span class="ico">👤</span> Usuarios
-    </a>
-    {% endif %}
-
-    <div style="margin-top:auto;padding:12px 16px;border-top:1px solid var(--dk-border)">
-      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">
-        {{ current_user.nombre }}
-        {% if current_user.es_admin() %}
-          <span class="badge-violet" style="margin-left:4px;font-size:9px">ADMIN</span>
-        {% endif %}
-      </div>
-      <div style="display:flex;gap:4px">
-        <a href="{{ url_for('usuarios.perfil') }}" class="btn-glow btn-ghost" style="font-size:10px;flex:1;justify-content:center;display:flex">Mi perfil</a>
-        <a href="{{ url_for('auth.logout') }}" class="btn-glow btn-ghost" style="font-size:10px;flex:1;justify-content:center;display:flex">Salir</a>
-      </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button onclick="abrirModal('modal-meta')" class="btn-glow btn-ghost">🎯 Agregar meta</button>
+      <button onclick="abrirModal('modal-venta')" class="btn-glow btn-primary-glow">+ Registrar venta</button>
     </div>
   </div>
 
-  <div class="main" id="main-content">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="alert-flash alert-{{ category }}">{{ message }}</div>
+  <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center">
+    <form method="GET" style="display:flex;gap:6px;align-items:center">
+      <select name="mes" class="dark-input" onchange="this.form.submit()">
+        {% for n, nombre in [(1,'Enero'),(2,'Febrero'),(3,'Marzo'),(4,'Abril'),(5,'Mayo'),(6,'Junio'),
+                             (7,'Julio'),(8,'Agosto'),(9,'Septiembre'),(10,'Octubre'),(11,'Noviembre'),(12,'Diciembre')] %}
+        <option value="{{ n }}" {% if n == mes %}selected{% endif %}>{{ nombre }}</option>
         {% endfor %}
-      {% endif %}
-    {% endwith %}
-    {% block content %}{% endblock %}
+      </select>
+      <select name="anio" class="dark-input" onchange="this.form.submit()">
+        {% for y in [2024, 2025, 2026, 2027] %}
+        <option value="{{ y }}" {% if y == anio %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+    </form>
+  </div>
+
+  {% set total_mes = ventas | sum(attribute='monto') %}
+  {% set meta_mes  = metas  | selectattr('mes', 'equalto', mes) | list %}
+  {% set meta_val  = meta_mes[0].meta if meta_mes else 0 %}
+  {% set pct       = ((total_mes / meta_val * 100) | round(0) | int) if meta_val > 0 else 0 %}
+  {% set pct       = [pct, 100] | min %}
+
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
+    <div class="glow-card" style="text-align:center">
+      <div style="font-size:22px;margin-bottom:4px">💰</div>
+      <div style="font-size:20px;font-weight:700;color:var(--green)">${{ '{:,.0f}'.format(total_mes).replace(',','.') }}</div>
+      <div style="font-size:11px;color:var(--text3)">Ventas este mes</div>
+    </div>
+    <div class="glow-card" style="text-align:center">
+      <div style="font-size:22px;margin-bottom:4px">🎯</div>
+      <div style="font-size:20px;font-weight:700;color:var(--blue2)">${{ '{:,.0f}'.format(meta_val).replace(',','.') }}</div>
+      <div style="font-size:11px;color:var(--text3)">Meta del mes</div>
+    </div>
+    <div class="glow-card" style="text-align:center">
+      <div style="font-size:22px;margin-bottom:4px">📊</div>
+      <div style="font-size:20px;font-weight:700;color:{% if pct >= 100 %}var(--green){% elif pct >= 70 %}var(--amber){% else %}var(--red){% endif %}">
+        {{ pct }}%
+      </div>
+      <div style="font-size:11px;color:var(--text3)">Cumplimiento</div>
+    </div>
+    <div class="glow-card" style="text-align:center">
+      <div style="font-size:22px;margin-bottom:4px">🔗</div>
+      <div style="font-size:20px;font-weight:700;color:var(--violet2)">
+        {{ ventas | selectattr('influencer_nombre', 'ne', 'Orgánico') | list | length }}
+      </div>
+      <div style="font-size:11px;color:var(--text3)">Influencers activos</div>
+    </div>
+  </div>
+
+  <div class="glow-card" style="margin-bottom:16px">
+    <div class="section-label" style="margin-bottom:10px">Ventas del mes</div>
+    <table class="dark-table">
+      <thead>
+        <tr>
+          <th>Influencer</th>
+          <th>Fecha</th>
+          <th>Monto</th>
+          <th>Nota</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in ventas %}
+        <tr>
+          <td style="color:var(--text1);font-weight:500">
+            {% if v.influencer_nombre == 'Orgánico' %}
+              <span style="color:var(--green)">🌿 Orgánico</span>
+            {% else %}
+              {{ v.influencer_nombre }}
+            {% endif %}
+          </td>
+          <td style="color:var(--text3);font-size:11px">{{ v.fecha or '—' }}</td>
+          <td style="color:var(--green);font-weight:600">${{ '{:,.0f}'.format(v.monto).replace(',','.') }}</td>
+          <td style="color:var(--text3);font-size:11px">{{ v.nota or '—' }}</td>
+          <td>
+            <div style="display:flex;gap:6px">
+              <button onclick="abrirEditar({{ v.id }}, {{ (v.influencer_id or '')|tojson }}, {{ (v.fecha or '')|tojson }}, {{ v.monto }}, {{ (v.nota or '')|tojson }})"
+                      class="btn-glow btn-ghost" style="font-size:11px;padding:4px 10px">✏ Editar</button>
+              <button type="button"
+                      onclick="confirmarEliminar({{ v.id }}, '${{ '{:,.0f}'.format(v.monto).replace(',','.') }}', '{{ v.fecha or '' }}')"
+                      class="btn-glow" style="font-size:11px;padding:4px 10px;background:rgba(255,80,80,.15);color:#f87171;border:1px solid rgba(255,80,80,.3)">
+                🗑 Eliminar
+              </button>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5" style="text-align:center;color:var(--text3);padding:24px">
+            Sin ventas registradas este mes.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="glow-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div class="section-label">Metas anuales {{ anio }}</div>
+      <button onclick="abrirModal('modal-meta')" class="btn-glow btn-ghost" style="font-size:11px">⚙ Editar metas</button>
+    </div>
+    <table class="dark-table">
+      <thead>
+        <tr>
+          <th>Mes</th>
+          <th>Meta</th>
+          <th>Vendido real</th>
+          <th>Cumplimiento</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% set meses_nombres = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'] %}
+        {% for m in metas %}
+        {% set p = ((m.real / m.meta * 100) | round(1)) if m.meta > 0 else 0 %}
+        <tr>
+          <td style="color:var(--text1);font-weight:500">{{ meses_nombres[m.mes] }}</td>
+          <td style="color:var(--text2)">${{ '{:,.0f}'.format(m.meta).replace(',','.') }}</td>
+          <td style="color:{% if m.real >= m.meta %}var(--green){% else %}var(--text2){% endif %};font-weight:600">
+            ${{ '{:,.0f}'.format(m.real).replace(',','.') }}
+          </td>
+          <td style="font-weight:600;color:{% if p >= 100 %}var(--green){% elif p >= 70 %}var(--amber){% else %}var(--red){% endif %}">
+            {{ p }}%
+          </td>
+          <td>
+            {% if m.meta == 0 %}
+              <span class="badge-gray">Sin meta</span>
+            {% elif p >= 100 %}
+              <span class="badge-green">Alcanzada</span>
+            {% elif p >= 70 %}
+              <span class="badge-amber">En progreso</span>
+            {% else %}
+              <span class="badge-red">Por debajo</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" style="text-align:center;color:var(--text3);padding:16px">Sin metas configuradas.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 
 </div>
-{% else %}
-  {% block content_unauth %}{% endblock %}
-{% endif %}
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Modal confirmar eliminación -->
+<div id="modal-confirmar" class="modal-overlay" style="z-index:10000;backdrop-filter:blur(4px)">
+  <div class="glow-card" style="width:360px;padding:28px;text-align:center;border:1px solid rgba(248,113,113,.2)">
+    <div style="font-size:36px;margin-bottom:12px">🗑</div>
+    <div style="font-size:15px;font-weight:700;color:var(--text1);margin-bottom:6px">¿Eliminar esta venta?</div>
+    <div id="confirm-detalle" style="font-size:12px;color:var(--text3);margin-bottom:20px;line-height:1.6"></div>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button onclick="cerrarModal('modal-confirmar')" class="btn-glow btn-ghost" style="flex:1;padding:9px 0">Cancelar</button>
+      <form id="form-eliminar" method="POST" action="" style="flex:1">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn-glow" style="width:100%;padding:9px 0;background:rgba(255,80,80,.18);color:#f87171;border:1px solid rgba(255,80,80,.35);font-weight:600">
+          Sí, eliminar
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal registrar venta -->
+<div id="modal-venta" class="modal-overlay">
+  <div class="glow-card" style="width:400px;padding:24px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="section-label">Registrar venta</div>
+      <button onclick="cerrarModal('modal-venta')" style="background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer">✕</button>
+    </div>
+    <form method="POST" action="{{ url_for('ecommerce.registrar_venta') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div>
+          <label class="form-label">Influencer</label>
+          <select name="influencer_id" class="dark-input">
+            <option value="">🌿 Orgánico / Sin influencer</option>
+            {% for inf in influencers %}
+            <option value="{{ inf.id }}">{{ inf.nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Fecha *</label>
+          <input type="date" name="fecha" class="dark-input" required value="{{ hoy_str }}">
+        </div>
+        <div>
+          <label class="form-label">Monto ($) *</label>
+          <input type="number" name="monto" class="dark-input" placeholder="0" step="0.01" required>
+        </div>
+        <div>
+          <label class="form-label">Nota</label>
+          <input type="text" name="nota" class="dark-input" placeholder="Nota (opcional)">
+        </div>
+        <button type="submit" class="btn-glow btn-primary-glow">Guardar venta</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal editar venta -->
+<div id="modal-editar" class="modal-overlay">
+  <div class="glow-card" style="width:400px;padding:24px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="section-label">Editar venta</div>
+      <button onclick="cerrarModal('modal-editar')" style="background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer">✕</button>
+    </div>
+    <form method="POST" id="form-editar" action="">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div>
+          <label class="form-label">Influencer</label>
+          <select name="influencer_id" id="edit-influencer" class="dark-input">
+            <option value="">🌿 Orgánico / Sin influencer</option>
+            {% for inf in influencers %}
+            <option value="{{ inf.id }}">{{ inf.nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Fecha *</label>
+          <input type="date" name="fecha" id="edit-fecha" class="dark-input" required>
+        </div>
+        <div>
+          <label class="form-label">Monto ($) *</label>
+          <input type="number" name="monto" id="edit-monto" class="dark-input" step="0.01" required>
+        </div>
+        <div>
+          <label class="form-label">Nota</label>
+          <input type="text" name="nota" id="edit-nota" class="dark-input">
+        </div>
+        <button type="submit" class="btn-glow btn-primary-glow">Guardar cambios</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal meta -->
+<div id="modal-meta" class="modal-overlay">
+  <div class="glow-card" style="width:380px;padding:24px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="section-label">Agregar / editar meta mensual</div>
+      <button onclick="cerrarModal('modal-meta')" style="background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer">✕</button>
+    </div>
+    <form method="POST" action="{{ url_for('ecommerce.metas') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div>
+          <label class="form-label">Mes</label>
+          <select name="mes" class="dark-input">
+            {% for n, nombre in [(1,'Enero'),(2,'Febrero'),(3,'Marzo'),(4,'Abril'),(5,'Mayo'),(6,'Junio'),
+                                 (7,'Julio'),(8,'Agosto'),(9,'Septiembre'),(10,'Octubre'),(11,'Noviembre'),(12,'Diciembre')] %}
+            <option value="{{ n }}" {% if n == mes %}selected{% endif %}>{{ nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Año</label>
+          <select name="anio" class="dark-input">
+            {% for y in [2024, 2025, 2026, 2027, 2028, 2029, 2030] %}
+            <option value="{{ y }}" {% if y == anio %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Meta ($) *</label>
+          <input type="number" name="meta" class="dark-input" step="0.01" required>
+        </div>
+        <input type="hidden" name="real" value="0">
+        <button type="submit" class="btn-glow btn-primary-glow">Guardar meta</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
-function toggleTheme(){
-  var body = document.body;
-  var btn = document.getElementById('theme-btn');
-  body.classList.toggle('light-mode');
-  btn.textContent = body.classList.contains('light-mode') ? '☀️' : '🌙';
-  try{ localStorage.setItem('mylan-theme', body.classList.contains('light-mode') ? 'light' : 'dark'); }catch(e){}
+function abrirModal(id) {
+  document.getElementById(id).classList.add('activo');
+  document.body.style.overflow = 'hidden';
 }
-
-// Aplicar tema inmediatamente cuando el DOM carga
-(function(){
-  try{
-    var isLight = localStorage.getItem('mylan-theme')==='light';
-    if(isLight){
-      document.body.classList.add('light-mode');
-    }
-    var btn = document.getElementById('theme-btn');
-    if(btn) btn.textContent = isLight ? '☀️' : '🌙';
-  }catch(e){}
-})();
-
-function confirmAction(opts){
-  var existing = document.getElementById('modal-confirm-global');
-  if(existing) existing.remove();
-
-  var colors = {
-    danger: ['rgba(239,68,68,.15)','var(--red)','btn-danger-glow'],
-    success:['rgba(16,185,129,.15)','var(--green)','btn-success-glow'],
-    warning:['rgba(245,158,11,.15)','var(--amber)','btn-warn-glow']
-  };
-  var c = colors[opts.type || 'danger'];
-
-  var div = document.createElement('div');
-  div.id='modal-confirm-global';
-  div.className='modal-confirm-overlay open';
-  div.innerHTML =
-    '<div class="modal-confirm-box">'+
-      '<div class="modal-confirm-icon" style="background:'+c[0]+';color:'+c[1]+'">'+opts.icon+'</div>'+
-      '<div class="modal-confirm-title">'+opts.title+'</div>'+
-      '<div class="modal-confirm-text">'+opts.text+'</div>'+
-      '<div class="modal-confirm-btns">'+
-        '<button class="btn-glow btn-ghost" id="mcg-cancel">Cancelar</button>'+
-        '<button class="btn-glow '+c[2]+'" id="mcg-ok">'+opts.confirmText+'</button>'+
-      '</div>'+
-    '</div>';
-
-  div.addEventListener('click', function(e){ if(e.target===div) div.remove(); });
-  div.querySelector('#mcg-cancel').addEventListener('click', function(){ div.remove(); });
-  div.querySelector('#mcg-ok').addEventListener('click', function(){ window.location.href = opts.url; });
-  document.body.appendChild(div);
+function cerrarModal(id) {
+  document.getElementById(id).classList.remove('activo');
+  document.body.style.overflow = '';
 }
+function abrirEditar(id, influencer_id, fecha, monto, nota) {
+  document.getElementById('form-editar').action = '/ecommerce/editar_venta/' + id;
+  document.getElementById('edit-influencer').value = influencer_id || '';
+  document.getElementById('edit-fecha').value = fecha || '';
+  document.getElementById('edit-monto').value = monto;
+  document.getElementById('edit-nota').value = nota || '';
+  abrirModal('modal-editar');
+}
+function confirmarEliminar(id, monto, fecha) {
+  document.getElementById('form-eliminar').action = '/ecommerce/eliminar_venta/' + id;
+  document.getElementById('confirm-detalle').innerHTML =
+    'Monto: <strong style="color:#f87171">' + monto + '</strong><br>' +
+    'Fecha: <strong style="color:var(--text2)">' + (fecha || '—') + '</strong>';
+  abrirModal('modal-confirmar');
+}
+function cerrarConfirmar() {
+  cerrarModal('modal-confirmar');
+}
+document.getElementById('modal-confirmar').addEventListener('click', function(e) {
+  if (e.target === this) cerrarModal('modal-confirmar');
+});
 </script>
-</body>
-</html>
+
+{% endblock %}

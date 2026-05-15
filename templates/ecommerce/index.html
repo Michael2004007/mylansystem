@@ -4,16 +4,20 @@
 {% block content %}
 <style>
 .modal-overlay {
-  display: none;
+  visibility: hidden;
+  opacity: 0;
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,.6);
-  z-index: 999;
+  z-index: 9999;
+  display: flex;
   align-items: center;
   justify-content: center;
+  transition: opacity .15s, visibility .15s;
 }
 .modal-overlay.activo {
-  display: flex !important;
+  visibility: visible;
+  opacity: 1;
 }
 </style>
 
@@ -177,7 +181,7 @@
 </div>
 
 <!-- Modal confirmar eliminación -->
-<div id="modal-confirmar" class="modal-overlay" style="z-index:1100;backdrop-filter:blur(4px)">
+<div id="modal-confirmar" class="modal-overlay" style="z-index:10000;backdrop-filter:blur(4px)">
   <div class="glow-card" style="width:360px;padding:28px;text-align:center;border:1px solid rgba(248,113,113,.2)">
     <div style="font-size:36px;margin-bottom:12px">🗑</div>
     <div style="font-size:15px;font-weight:700;color:var(--text1);margin-bottom:6px">¿Eliminar esta venta?</div>
@@ -309,9 +313,11 @@
 <script>
 function abrirModal(id) {
   document.getElementById(id).classList.add('activo');
+  document.body.style.overflow = 'hidden';
 }
 function cerrarModal(id) {
   document.getElementById(id).classList.remove('activo');
+  document.body.style.overflow = '';
 }
 function abrirEditar(id, influencer_id, fecha, monto, nota) {
   document.getElementById('form-editar').action = '/ecommerce/editar_venta/' + id;
