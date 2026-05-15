@@ -110,8 +110,13 @@
           <td style="color:var(--text3);font-size:11px">{{ v.nota or '—' }}</td>
           <td>
             <div style="display:flex;gap:6px">
-              <button onclick="abrirEditar({{ v.id }}, {{ (v.influencer_id or '')|tojson }}, {{ (v.fecha or '')|tojson }}, {{ v.monto }}, {{ (v.nota or '')|tojson }})"
-                      class="btn-glow btn-ghost" style="font-size:11px;padding:4px 10px">✏ Editar</button>
+              <button class="btn-glow btn-ghost btn-editar"
+                      style="font-size:11px;padding:4px 10px"
+                      data-id="{{ v.id }}"
+                      data-influencer="{{ v.influencer_id or '' }}"
+                      data-fecha="{{ v.fecha or '' }}"
+                      data-monto="{{ v.monto }}"
+                      data-nota="{{ v.nota or '' }}">✏ Editar</button>
               <button type="button"
                       onclick="confirmarEliminar({{ v.id }}, '${{ '{:,.0f}'.format(v.monto).replace(',','.') }}', '{{ v.fecha or '' }}')"
                       class="btn-glow" style="font-size:11px;padding:4px 10px;background:rgba(255,80,80,.15);color:#f87171;border:1px solid rgba(255,80,80,.3)">
@@ -319,14 +324,19 @@ function cerrarModal(id) {
   document.getElementById(id).classList.remove('activo');
   document.body.style.overflow = '';
 }
-function abrirEditar(id, influencer_id, fecha, monto, nota) {
-  document.getElementById('form-editar').action = '/ecommerce/editar_venta/' + id;
-  document.getElementById('edit-influencer').value = influencer_id || '';
-  document.getElementById('edit-fecha').value = fecha || '';
-  document.getElementById('edit-monto').value = monto;
-  document.getElementById('edit-nota').value = nota || '';
-  abrirModal('modal-editar');
-}
+
+document.addEventListener('click', function(e) {
+  var btn = e.target.closest('.btn-editar');
+  if (btn) {
+    document.getElementById('form-editar').action = '/ecommerce/editar_venta/' + btn.dataset.id;
+    document.getElementById('edit-influencer').value = btn.dataset.influencer || '';
+    document.getElementById('edit-fecha').value = btn.dataset.fecha || '';
+    document.getElementById('edit-monto').value = btn.dataset.monto;
+    document.getElementById('edit-nota').value = btn.dataset.nota || '';
+    abrirModal('modal-editar');
+  }
+});
+
 function confirmarEliminar(id, monto, fecha) {
   document.getElementById('form-eliminar').action = '/ecommerce/eliminar_venta/' + id;
   document.getElementById('confirm-detalle').innerHTML =
