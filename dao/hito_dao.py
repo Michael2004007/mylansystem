@@ -1,5 +1,7 @@
 from conexion import Conexion
 from entidades.hito import Hito
+import json
+from datetime import datetime
 
 
 class HitoDAO:
@@ -9,14 +11,25 @@ class HitoDAO:
         conn = None
         cursor = None
         try:
-            conn   = Conexion.obtener_conexion()
+            conn = Conexion.obtener_conexion()
             cursor = conn.cursor(dictionary=True)
             cursor.execute(
                 "SELECT * FROM hitos_campana WHERE campana_id = %s ORDER BY fecha_hora",
                 (campana_id,)
             )
             rows = cursor.fetchall()
-            return [Hito(**row) for row in rows]
+            hitos = []
+            for row in rows:
+                # Parsear el historial JSON si existe
+                if row.get('historial_postergaciones'):
+                    try:
+                        row['historial_postergaciones'] = json.loads(row['historial_postergaciones'])
+                    except:
+                        row['historial_postergaciones'] = []
+                else:
+                    row['historial_postergaciones'] = []
+                hitos.append(Hito(**row))
+            return hitos
         except Exception as e:
             print(f"❌ Error listar hitos: {e}")
             return []
@@ -29,11 +42,21 @@ class HitoDAO:
         conn = None
         cursor = None
         try:
-            conn   = Conexion.obtener_conexion()
+            conn = Conexion.obtener_conexion()
             cursor = conn.cursor(dictionary=True)
             cursor.execute("SELECT * FROM hitos_campana WHERE id = %s", (id,))
             row = cursor.fetchone()
-            return Hito(**row) if row else None
+            if row:
+                # Parsear el historial JSON si existe
+                if row.get('historial_postergaciones'):
+                    try:
+                        row['historial_postergaciones'] = json.loads(row['historial_postergaciones'])
+                    except:
+                        row['historial_postergaciones'] = []
+                else:
+                    row['historial_postergaciones'] = []
+                return Hito(**row)
+            return None
         except Exception as e:
             print(f"❌ Error obtener hito: {e}")
             return None
@@ -46,7 +69,7 @@ class HitoDAO:
         conn = None
         cursor = None
         try:
-            conn   = Conexion.obtener_conexion()
+            conn = Conexion.obtener_conexion()
             cursor = conn.cursor()
             sql = """INSERT INTO hitos_campana
                      (campana_id, titulo, descripcion, lugar, fecha_hora, estado)
@@ -70,7 +93,7 @@ class HitoDAO:
         conn = None
         cursor = None
         try:
-            conn   = Conexion.obtener_conexion()
+            conn = Conexion.obtener_conexion()
             cursor = conn.cursor()
             cursor.execute("UPDATE hitos_campana SET estado='hecho' WHERE id=%s", (id,))
             conn.commit()
@@ -88,12 +111,42 @@ class HitoDAO:
         conn = None
         cursor = None
         try:
-            conn   = Conexion.obtener_conexion()
-            cursor = conn.cursor()
+            conn = Conexion.obtener_conexion()
+            cursor = conn.cursor(dictionary=True)
+
+            # 1. Obtener el hito actual con su fecha e historial
+            cursor.execute(
+                "SELECT fecha_hora, historial_postergaciones FROM hitos_campana WHERE id = %s",
+                (id,)
+            )
+            row = cursor.fetchone()
+            fecha_anterior = row['fecha_hora']
+            historial_json = row['historial_postergaciones']
+
+            # 2. Parsear el historial existente
+            if historial_json:
+                try:
+                    historial = json.loads(historial_json)
+                except:
+                    historial = []
+            else:
+                historial = []
+
+            # 3. Agregar la nueva postergación al historial
+            historial.append({
+                'fecha_anterior': str(fecha_anterior),
+                'fecha_nueva': nueva_fecha,
+                'motivo': motivo,
+                'fecha_postergacion': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            })
+
+            # 4. Actualizar el hito con la nueva fecha, estado postergado y el historial
             sql = """UPDATE hitos_campana
-                     SET estado='postergado', fecha_posterg=%s, motivo_posterg=%s
-                     WHERE id=%s"""
-            cursor.execute(sql, (nueva_fecha, motivo, id))
+                     SET fecha_hora = %s,
+                         estado = 'postergado',
+                         historial_postergaciones = %s
+                     WHERE id = %s"""
+            cursor.execute(sql, (nueva_fecha, json.dumps(historial), id))
             conn.commit()
             return cursor.rowcount
         except Exception as e:
@@ -109,7 +162,7 @@ class HitoDAO:
         conn = None
         cursor = None
         try:
-            conn   = Conexion.obtener_conexion()
+            conn = Conexion.obtener_conexion()
             cursor = conn.cursor()
             cursor.execute("DELETE FROM hitos_campana WHERE id=%s", (id,))
             conn.commit()
