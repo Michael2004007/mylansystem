@@ -122,84 +122,123 @@
 
       {% if hitos %}
       {% for h in hitos %}
-      <div class="glow-card" style="margin-bottom:8px;padding:12px 14px;{% if h.estado == 'hecho' %}opacity:.6;{% endif %}position:relative;overflow:hidden">
 
-        <!-- Marca de agua POSTERGADO para hitos con historial -->
+        <!-- MOSTRAR HISTORIAL DE POSTERGACIONES COMO CARDS SEPARADAS -->
         {% if h.historial_postergaciones and h.historial_postergaciones|length > 0 %}
-        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-25deg);font-size:32px;font-weight:900;color:rgba(245,158,11,.08);letter-spacing:4px;pointer-events:none;white-space:nowrap;z-index:0">
-          POSTERGADO
-        </div>
-        {% endif %}
+          {% for post in h.historial_postergaciones|reverse %}
+          <!-- Card de fecha postergada (SIN botones) -->
+          <div class="glow-card" style="margin-bottom:8px;padding:12px 14px;position:relative;overflow:hidden;opacity:0.7;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.04)">
 
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;position:relative;z-index:1">
-          <div style="flex:1">
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
-              {% if h.estado == 'hecho' %}<span style="font-size:12px">✅</span>
-              {% elif h.estado == 'postergado' %}<span style="font-size:12px">📆</span>
-              {% else %}<span style="font-size:12px">🕐</span>{% endif %}
-              <div style="font-size:12px;font-weight:600;color:var(--text1)">{{ h.titulo }}</div>
-            </div>
-            {% if h.lugar %}
-            <div style="font-size:10px;color:var(--text2);margin-top:2px;font-weight:500">📍 {{ h.lugar }}</div>
-            {% endif %}
-
-            <!-- Fecha ACTUAL (la más reciente) -->
-            <div style="font-size:10px;color:{% if h.estado == 'postergado' %}var(--amber){% else %}var(--text2){% endif %};font-weight:{% if h.estado == 'postergado' %}600{% else %}500{% endif %};margin-top:2px">
-              🗓 {{ h.fecha_hora.strftime('%d/%m/%Y %H:%M') if h.fecha_hora is not string else h.fecha_hora }}
-              {% if h.estado == 'postergado' %}<span style="margin-left:4px;font-size:9px;color:var(--amber);font-weight:700">(Nueva fecha)</span>{% endif %}
+            <!-- Marca de agua POSTERGADO -->
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-25deg);font-size:28px;font-weight:900;color:rgba(239,68,68,.12);letter-spacing:3px;pointer-events:none;white-space:nowrap;z-index:0">
+              POSTERGADO
             </div>
 
-            <!-- Historial de postergaciones (fechas anteriores) -->
-            {% if h.historial_postergaciones and h.historial_postergaciones|length > 0 %}
-            <div style="margin-top:8px;padding-top:8px;border-top:1px dashed rgba(245,158,11,.3)">
-              <div style="font-size:9px;color:var(--text2);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">
-                📜 Historial de postergaciones
-              </div>
-              {% for post in h.historial_postergaciones|reverse %}
-              <div style="font-size:9px;color:var(--text1);padding:4px 8px;margin-bottom:3px;background:rgba(245,158,11,.08);border-left:2px solid rgba(245,158,11,.4);border-radius:4px">
-                <span style="text-decoration:line-through;color:var(--text2);font-weight:500">
-                  {{ post.fecha_anterior.strftime('%d/%m/%Y %H:%M') if post.fecha_anterior is not string else post.fecha_anterior }}
-                </span>
-                <span style="margin:0 4px;color:var(--amber);font-weight:700">→</span>
-                <span style="color:var(--text1);font-weight:600">
-                  {{ post.fecha_nueva.strftime('%d/%m/%Y %H:%M') if post.fecha_nueva is not string else post.fecha_nueva }}
-                </span>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;position:relative;z-index:1">
+              <div style="flex:1">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+                  <span style="font-size:12px">❌</span>
+                  <div style="font-size:12px;font-weight:600;color:var(--text1);text-decoration:line-through">{{ h.titulo }}</div>
+                  <span class="badge-red" style="font-size:8px;padding:2px 6px">POSTERGADO</span>
+                </div>
+
+                {% if h.lugar %}
+                <div style="font-size:10px;color:var(--text2);margin-top:2px;font-weight:500">📍 {{ h.lugar }}</div>
+                {% endif %}
+
+                <!-- Fecha ANTERIOR (postergada) -->
+                <div style="font-size:10px;color:var(--red);font-weight:600;margin-top:2px;text-decoration:line-through">
+                  🗓 {{ post.fecha_anterior.strftime('%d/%m/%Y %H:%M') if post.fecha_anterior is not string else post.fecha_anterior }}
+                </div>
+
                 {% if post.motivo %}
-                <div style="margin-top:3px;font-style:italic;color:var(--text2);font-weight:500">
-                  💬 {{ post.motivo }}
+                <div style="margin-top:6px;padding:6px 8px;background:rgba(239,68,68,.08);border-left:2px solid rgba(239,68,68,.4);border-radius:4px">
+                  <div style="font-size:9px;color:var(--text2);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">
+                    💬 Motivo de postergación
+                  </div>
+                  <div style="font-size:9px;color:var(--text1);font-style:italic;font-weight:500">
+                    {{ post.motivo }}
+                  </div>
+                  <div style="font-size:9px;color:var(--text3);margin-top:3px;font-weight:500">
+                    Reprogramado para: {{ post.fecha_nueva.strftime('%d/%m/%Y %H:%M') if post.fecha_nueva is not string else post.fecha_nueva }}
+                  </div>
                 </div>
                 {% endif %}
+
+                {% if h.descripcion %}
+                <div style="font-size:10px;color:var(--text2);margin-top:4px;font-weight:500;opacity:0.6">{{ h.descripcion }}</div>
+                {% endif %}
               </div>
-              {% endfor %}
+
+              <!-- SIN BOTONES para fechas postergadas -->
+              <div style="display:flex;align-items:center;justify-content:center;min-width:60px;color:var(--red);font-size:20px;opacity:0.3">
+                🚫
+              </div>
             </div>
-            {% endif %}
-
-            {% if h.descripcion %}
-            <div style="font-size:10px;color:var(--text2);margin-top:4px;font-weight:500">{{ h.descripcion }}</div>
-            {% endif %}
           </div>
+          {% endfor %}
+        {% endif %}
 
-          {% if h.estado == 'pendiente' %}
-          <div style="display:flex;flex-direction:column;gap:3px;flex-shrink:0">
-            <a href="{{ url_for('campanas.hito_hecho', hito_id=h.id) }}"
-               class="btn-glow btn-success-glow" style="font-size:9px;padding:3px 7px">✓ Hecho</a>
-            <button class="btn-glow btn-ghost" style="font-size:9px;padding:3px 7px"
-                    onclick="abrirPostergar({{ h.id }})">📆 Postergar</button>
-            <button class="btn-glow btn-danger-glow" style="font-size:9px;padding:3px 7px"
-                    onclick="confirmarEliminarHito('{{ h.id }}', '{{ h.titulo }}')">✕</button>
-          </div>
-          {% elif h.estado == 'postergado' %}
-          <div style="display:flex;flex-direction:column;gap:3px;flex-shrink:0">
-            <a href="{{ url_for('campanas.hito_hecho', hito_id=h.id) }}"
-               class="btn-glow btn-success-glow" style="font-size:9px;padding:3px 7px">✓ Hecho</a>
-            <button class="btn-glow btn-ghost" style="font-size:9px;padding:3px 7px"
-                    onclick="abrirPostergar({{ h.id }})">📆 Re-postergar</button>
-            <button class="btn-glow btn-danger-glow" style="font-size:9px;padding:3px 7px"
-                    onclick="confirmarEliminarHito('{{ h.id }}', '{{ h.titulo }}')">✕</button>
+        <!-- CARD DEL HITO ACTUAL (CON botones) -->
+        <div class="glow-card" style="margin-bottom:8px;padding:12px 14px;{% if h.estado == 'hecho' %}opacity:.6;{% endif %}position:relative;overflow:hidden;{% if h.estado == 'postergado' %}border:1px solid rgba(245,158,11,.4);background:rgba(245,158,11,.04);{% endif %}">
+
+          {% if h.estado == 'postergado' %}
+          <!-- Marca de agua para el hito activo postergado -->
+          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-25deg);font-size:32px;font-weight:900;color:rgba(245,158,11,.08);letter-spacing:4px;pointer-events:none;white-space:nowrap;z-index:0">
+            FECHA NUEVA
           </div>
           {% endif %}
+
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;position:relative;z-index:1">
+            <div style="flex:1">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+                {% if h.estado == 'hecho' %}<span style="font-size:12px">✅</span>
+                {% elif h.estado == 'postergado' %}<span style="font-size:12px">📆</span>
+                {% else %}<span style="font-size:12px">🕐</span>{% endif %}
+                <div style="font-size:12px;font-weight:600;color:var(--text1)">{{ h.titulo }}</div>
+                {% if h.estado == 'postergado' %}
+                  <span class="badge-amber" style="font-size:8px;padding:2px 6px;animation:pulse 2s infinite">REPROGRAMADO</span>
+                {% endif %}
+              </div>
+
+              {% if h.lugar %}
+              <div style="font-size:10px;color:var(--text2);margin-top:2px;font-weight:500">📍 {{ h.lugar }}</div>
+              {% endif %}
+
+              <!-- Fecha ACTUAL -->
+              <div style="font-size:10px;color:{% if h.estado == 'postergado' %}var(--amber){% else %}var(--text2){% endif %};font-weight:{% if h.estado == 'postergado' %}700{% else %}500{% endif %};margin-top:2px">
+                🗓 {{ h.fecha_hora.strftime('%d/%m/%Y %H:%M') if h.fecha_hora is not string else h.fecha_hora }}
+                {% if h.estado == 'postergado' %}<span style="margin-left:4px;font-size:9px;color:var(--green);font-weight:700;background:rgba(16,185,129,.1);padding:2px 6px;border-radius:4px">← Nueva fecha activa</span>{% endif %}
+              </div>
+
+              {% if h.descripcion %}
+              <div style="font-size:10px;color:var(--text2);margin-top:4px;font-weight:500">{{ h.descripcion }}</div>
+              {% endif %}
+            </div>
+
+            <!-- BOTONES solo en el hito actual -->
+            {% if h.estado == 'pendiente' %}
+            <div style="display:flex;flex-direction:column;gap:3px;flex-shrink:0">
+              <a href="{{ url_for('campanas.hito_hecho', hito_id=h.id) }}"
+                 class="btn-glow btn-success-glow" style="font-size:9px;padding:3px 7px">✓ Hecho</a>
+              <button class="btn-glow btn-ghost" style="font-size:9px;padding:3px 7px"
+                      onclick="abrirPostergar({{ h.id }})">📆 Postergar</button>
+              <button class="btn-glow btn-danger-glow" style="font-size:9px;padding:3px 7px"
+                      onclick="confirmarEliminarHito('{{ h.id }}', '{{ h.titulo }}')">✕</button>
+            </div>
+            {% elif h.estado == 'postergado' %}
+            <div style="display:flex;flex-direction:column;gap:3px;flex-shrink:0">
+              <a href="{{ url_for('campanas.hito_hecho', hito_id=h.id) }}"
+                 class="btn-glow btn-success-glow" style="font-size:9px;padding:3px 7px">✓ Hecho</a>
+              <button class="btn-glow btn-ghost" style="font-size:9px;padding:3px 7px"
+                      onclick="abrirPostergar({{ h.id }})">📆 Re-postergar</button>
+              <button class="btn-glow btn-danger-glow" style="font-size:9px;padding:3px 7px"
+                      onclick="confirmarEliminarHito('{{ h.id }}', '{{ h.titulo }}')">✕</button>
+            </div>
+            {% endif %}
+          </div>
         </div>
-      </div>
+
       {% endfor %}
       {% else %}
       <div class="glow-card" style="text-align:center;color:var(--text3);padding:20px;font-size:11px">
@@ -437,6 +476,13 @@
     </form>
   </div>
 </div>
+
+<style>
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+</style>
 
 <script>
 // Buscador de influencers
