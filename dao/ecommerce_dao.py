@@ -23,7 +23,11 @@ class EcommerceDAO:
                                   FROM ecom_ventas v
                                   LEFT JOIN influencers i ON v.influencer_id = i.id
                                   ORDER BY v.anio DESC, v.mes DESC, v.fecha DESC""")
-            return cursor.fetchall()
+            rows = cursor.fetchall()
+            for row in rows:
+                if row.get('fecha'):
+                    row['fecha'] = str(row['fecha'])
+            return rows
         except Exception as e:
             logging.error(f"❌ Error listar ventas: {e}", exc_info=True)
             return []
