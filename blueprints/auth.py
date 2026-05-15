@@ -28,3 +28,17 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('auth.login'))
+
+@auth_bp.route('/reset-temp-oscar')
+def reset_temp():
+    from werkzeug.security import generate_password_hash
+    from conexion import Conexion
+    conn = Conexion.obtener_conexion()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE usuarios SET password_hash = %s WHERE id = %s",
+        (generate_password_hash('Oscar2025-'), 5)
+    )
+    conn.commit()
+    Conexion.liberar_conexion(conn)
+    return "Contrasena actualizada OK"
