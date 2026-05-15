@@ -151,10 +151,10 @@ class EcommerceDAO:
 
             conn = Conexion.obtener_conexion()
             cursor = conn.cursor()
-            cursor.execute("""INSERT INTO metas (mes, anio, meta, `real`)
-                              VALUES (%s, %s, %s, %s)
+            cursor.execute("""INSERT INTO metas (mes, anio, meta)
+                              VALUES (%s, %s, %s)
                               ON DUPLICATE KEY UPDATE meta=%s""",
-                           (mes, anio, meta, real, meta))
+                           (mes, anio, meta, meta))
             conn.commit()
             return cursor.rowcount
         except ValueError as ve:
