@@ -152,3 +152,32 @@ class FeedStoryDAO:
                 cursor.close()
             Conexion.liberar_conexion(conn)
 
+    @classmethod
+    def actualizar_detalle(cls, contenido_id, hora_publicacion, copy_texto, responsable_id, observacion):
+        conn = None
+        cursor = None
+        try:
+            conn = Conexion.obtener_conexion()
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                UPDATE feed_stories
+                SET hora_publicacion=%s,
+                    copy_texto=%s,
+                    responsable_id=%s,
+                    observacion=%s
+                WHERE id=%s
+                """,
+                (hora_publicacion, copy_texto, responsable_id, observacion, contenido_id)
+            )
+            conn.commit()
+            return cursor.rowcount
+        except Exception as e:
+            print(f"Error actualizar detalle de contenido: {e}")
+            if conn:
+                conn.rollback()
+            return None
+        finally:
+            if cursor:
+                cursor.close()
+            Conexion.liberar_conexion(conn)

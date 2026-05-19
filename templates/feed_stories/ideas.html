@@ -5,7 +5,7 @@
   <div class="topbar">
     <div>
       <div class="page-title">Ideas Feed & Stories</div>
-      <div class="page-subtitle">Ideas editoriales separadas de campañas comerciales</div>
+      <div class="page-subtitle">Banco de ideas en tarjetas</div>
     </div>
   </div>
 
@@ -29,43 +29,44 @@
         <input class="dark-input" name="mes" value="{{ mes }}" required>
         <input class="dark-input" name="anio" value="{{ anio }}" required>
       </div>
-      <div style="margin-bottom:8px"><input class="dark-input" name="titulo" placeholder="Título idea" required></div>
       <div class="form-grid" style="margin-bottom:8px">
-        <input class="dark-input" name="agrupador" placeholder="Campaña editorial / bloque mensual">
-        <select class="dark-input" name="responsable_id"><option value="">Sin responsable</option>{% for u in usuarios %}<option value="{{ u.id }}">{{ u.nombre }}</option>{% endfor %}</select>
+        <input class="dark-input" name="titulo" placeholder="Título idea" required>
+        <input class="dark-input" name="agrupador" placeholder="Campaña editorial o bloque">
       </div>
-      <div style="margin-bottom:8px"><textarea class="dark-input" name="detalle" rows="2" placeholder="Detalle"></textarea></div>
-      <div style="margin-bottom:8px"><textarea class="dark-input" name="copy_texto" rows="2" placeholder="Copy base"></textarea></div>
-      <button class="btn-glow btn-primary-glow">Guardar idea</button>
+      <div class="form-grid" style="margin-bottom:8px">
+        <select class="dark-input" name="responsable_id"><option value="">Sin responsable</option>{% for u in usuarios %}<option value="{{ u.id }}">{{ u.nombre }}</option>{% endfor %}</select>
+        <input class="dark-input" name="copy_texto" placeholder="Copy base">
+      </div>
+      <textarea class="dark-input" name="detalle" rows="2" placeholder="Detalle"></textarea>
+      <button class="btn-glow btn-primary-glow" style="margin-top:8px">Guardar idea</button>
     </form>
   </div>
 
-  <div class="glow-card">
-    <div class="section-label">Listado de ideas</div>
-    <table class="dark-table">
-      <thead><tr><th>Tipo</th><th>Título</th><th>Agrupador</th><th>Responsable</th><th>Estado</th><th>Acción</th></tr></thead>
-      <tbody>
-        {% for i in ideas %}
-        <tr>
-          <td>{{ i.tipo }}</td>
-          <td>{{ i.titulo }}</td>
-          <td>{{ i.agrupador or '—' }}</td>
-          <td>{{ i.responsable_nombre or '—' }}</td>
-          <td>{% if i.estado == 'pasada' %}<span class="badge-green">pasada</span>{% else %}<span class="badge-amber">idea</span>{% endif %}</td>
-          <td>
-            {% if i.estado != 'pasada' %}
-            <form method="POST" action="{{ url_for('feed_stories.idea_pasar', id=i.id) }}">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button class="btn-glow btn-ghost" style="font-size:10px;padding:4px 8px">Pasar a operativo</button>
-            </form>
-            {% endif %}
-          </td>
-        </tr>
-        {% else %}
-        <tr><td colspan="6" style="text-align:center;color:var(--text3)">Sin ideas aún.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px">
+    {% for i in ideas %}
+    <div class="glow-card">
+      <div style="display:flex;justify-content:space-between;align-items:start;gap:8px">
+        <div>
+          <div style="font-size:11px;color:var(--text3)">{{ i.tipo|upper }} · {{ i.mes }}/{{ i.anio }}</div>
+          <div style="font-size:13px;font-weight:700;color:var(--text1)">{{ i.titulo }}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:4px">{{ i.detalle or 'Sin detalle' }}</div>
+        </div>
+        {% if i.estado == 'pasada' %}<span class="badge-green">pasada</span>{% else %}<span class="badge-amber">idea</span>{% endif %}
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:8px">Responsable: {{ i.responsable_nombre or 'Sin responsable' }}</div>
+      {% if i.copy_texto %}
+      <div style="font-size:11px;color:var(--text2);margin-top:6px">Copy: {{ i.copy_texto }}</div>
+      {% endif %}
+      {% if i.estado != 'pasada' %}
+      <form method="POST" action="{{ url_for('feed_stories.idea_pasar', id=i.id) }}" style="margin-top:10px">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn-glow btn-ghost" style="font-size:10px;padding:4px 8px">Pasar a operativo</button>
+      </form>
+      {% endif %}
+    </div>
+    {% else %}
+    <div class="glow-card" style="color:var(--text3)">Sin ideas aún.</div>
+    {% endfor %}
   </div>
 </div>
 {% endblock %}

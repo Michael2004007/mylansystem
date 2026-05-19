@@ -33,14 +33,40 @@ def index():
 
     feed = [c for c in contenidos if c.get('tipo') == 'feed']
     stories = [c for c in contenidos if c.get('tipo') == 'stories']
-    dias = sorted({str(c.get('fecha_publicacion')) for c in contenidos if c.get('fecha_publicacion')})
+
+    def _semana_del_mes(fecha_val):
+        d = fecha_val.day if hasattr(fecha_val, 'day') else int(str(fecha_val).split('-')[-1])
+        if d <= 7:
+            return 'Semana 1-7'
+        if d <= 14:
+            return 'Semana 8-14'
+        if d <= 21:
+            return 'Semana 15-21'
+        if d <= 28:
+            return 'Semana 22-28'
+        return 'Semana 29-fin'
+
+    def _agrupar(items):
+        grupos = {}
+        for it in items:
+            f = it.get('fecha_publicacion')
+            if not f:
+                continue
+            semana = _semana_del_mes(f)
+            fecha_key = str(f)
+            grupos.setdefault(semana, {}).setdefault(fecha_key, []).append(it)
+        return grupos
+
+    feed_grupos = _agrupar(feed)
+    stories_grupos = _agrupar(stories)
 
     return render_template(
         'feed_stories/index.html',
         contenidos=contenidos,
         feed=feed,
         stories=stories,
-        dias=dias,
+        feed_grupos=feed_grupos,
+        stories_grupos=stories_grupos,
         usuarios=usuarios,
         anio=anio,
         mes=mes,
@@ -54,7 +80,7 @@ def index():
 def nuevo():
     tipo = request.form.get('tipo')
     fecha_publicacion = request.form.get('fecha_publicacion')
-    hora_publicacion = request.form.get('hora_publicacion')
+    hora_publicacion = request.form.get('hora_publicacion') or '09:00'
     copy_texto = request.form.get('copy_texto')
     responsable_id = request.form.get('responsable_id', type=int)
     observacion = request.form.get('observacion')
@@ -67,8 +93,8 @@ def nuevo():
             return redirect(url_for('feed_stories.index', anio=anio_vista, mes=mes_vista))
         return redirect(url_for('feed_stories.index'))
 
-    if tipo not in ('feed', 'stories') or not fecha_publicacion or not hora_publicacion or not archivo:
-        flash('Completa tipo, fecha, hora y archivo.', 'error')
+    if tipo not in ('feed', 'stories') or not fecha_publicacion or not archivo:
+        flash('Completa tipo, fecha y archivo.', 'error')
         return _back()
     if not _allowed(archivo.filename):
         flash('Formato no permitido.', 'error')
@@ -136,6 +162,19 @@ def descargar(id):
     return send_file(ruta, as_attachment=True, download_name=item['archivo_nombre'])
 
 
+@feed_stories_bp.route('/ver/<int:id>')
+@login_required
+@requiere_permiso('feed_stories')
+def ver_archivo(id):
+    item = FeedStoryDAO.obtener(id)
+    if not item:
+        abort(404)
+    ruta = item['archivo_ruta']
+    if not os.path.exists(ruta):
+        abort(404)
+    return send_file(ruta)
+
+
 @feed_stories_bp.route('/publicado/<int:id>', methods=['POST'])
 @login_required
 @requiere_permiso('feed_stories', requiere_editar=True)
@@ -155,6 +194,26 @@ def guardar_observacion(id):
         flash('No se pudo guardar la observacion.', 'error')
     else:
         flash('Observacion guardada.', 'success')
+    return redirect(request.referrer or url_for('feed_stories.index'))
+
+
+@feed_stories_bp.route('/actualizar/<int:id>', methods=['POST'])
+@login_required
+@requiere_permiso('feed_stories', requiere_editar=True)
+def actualizar_card(id):
+    item = FeedStoryDAO.obtener(id)
+    if not item:
+        flash('Contenido no encontrado.', 'error')
+        return redirect(url_for('feed_stories.index'))
+    hora = request.form.get('hora_publicacion') or item.get('hora_publicacion') or '09:00'
+    copy_texto = request.form.get('copy_texto')
+    responsable_id = request.form.get('responsable_id', type=int)
+    observacion = request.form.get('observacion')
+    ok = FeedStoryDAO.actualizar_detalle(id, hora, copy_texto, responsable_id, observacion)
+    if ok:
+        flash('Tarjeta actualizada.', 'success')
+    else:
+        flash('No se pudo actualizar la tarjeta.', 'error')
     return redirect(request.referrer or url_for('feed_stories.index'))
 
 

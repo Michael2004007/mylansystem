@@ -5,27 +5,23 @@
   <div class="topbar">
     <div>
       <div class="page-title">Feed & Stories</div>
-      <div class="page-subtitle">Plan diario para descargar y publicar</div>
+      <div class="page-subtitle">Carga rápida y organización por carpetas de fecha</div>
     </div>
   </div>
 
   <div class="glow-card" style="margin-bottom:12px">
     <form method="GET" style="display:flex;gap:8px;flex-wrap:wrap">
       <select class="dark-input" name="mes" onchange="this.form.submit()" style="width:auto">
-        {% for m in range(1,13) %}
-        <option value="{{ m }}" {% if m==mes %}selected{% endif %}>Mes {{ m }}</option>
-        {% endfor %}
+        {% for m in range(1,13) %}<option value="{{ m }}" {% if m==mes %}selected{% endif %}>Mes {{ m }}</option>{% endfor %}
       </select>
       <select class="dark-input" name="anio" onchange="this.form.submit()" style="width:auto">
-        {% for y in [2025,2026,2027,2028] %}
-        <option value="{{ y }}" {% if y==anio %}selected{% endif %}>{{ y }}</option>
-        {% endfor %}
+        {% for y in [2025,2026,2027,2028] %}<option value="{{ y }}" {% if y==anio %}selected{% endif %}>{{ y }}</option>{% endfor %}
       </select>
     </form>
   </div>
 
   <div class="glow-card" style="margin-bottom:12px">
-    <div class="section-label">Nuevo contenido</div>
+    <div class="section-label">Subida rápida (solo tipo + fecha + archivo)</div>
     <form method="POST" action="{{ url_for('feed_stories.nuevo') }}" enctype="multipart/form-data">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="mes_vista" value="{{ mes }}">
@@ -36,30 +32,27 @@
           <option value="stories">Stories</option>
         </select>
         <input class="dark-input" type="date" name="fecha_publicacion" required>
-        <input class="dark-input" type="time" name="hora_publicacion" required>
-      </div>
-      <div class="form-grid" style="margin-bottom:8px">
-        <select class="dark-input" name="responsable_id">
-          <option value="">Sin responsable</option>
-          {% for u in usuarios %}<option value="{{ u.id }}">{{ u.nombre }}</option>{% endfor %}
-        </select>
         <input class="dark-input" type="file" name="archivo" required>
       </div>
-      <div style="margin-bottom:8px"><textarea class="dark-input" name="copy_texto" rows="2" placeholder="Texto/copy para publicar"></textarea></div>
-      <div style="margin-bottom:8px"><textarea class="dark-input" name="observacion" rows="2" placeholder="Observación para mejorar próxima pieza"></textarea></div>
       <button class="btn-glow btn-primary-glow" type="submit">Cargar contenido</button>
     </form>
   </div>
 
   <div class="glow-card" style="margin-bottom:12px">
-    <div class="section-label">Previsualización feed (grilla)</div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-      {% for c in contenidos if c.tipo == 'feed' %}
-      <div style="border:1px solid {% if c.fecha_publicacion == hoy and c.estado == 'publicado' %}rgba(16,185,129,.8){% else %}var(--dk-border){% endif %};border-radius:8px;padding:8px">
-        <div style="font-size:10px;color:var(--text3)">{{ c.fecha_publicacion }} {{ c.hora_publicacion }}</div>
-        <div style="font-size:11px;color:var(--text1);font-weight:600">{{ c.archivo_nombre }}</div>
-        <div style="font-size:10px;color:{% if c.estado == 'publicado' %}var(--green){% else %}var(--amber){% endif %}">
-          {{ c.estado }}
+    <div class="section-label">Previsualización Feed (estilo tarjetas)</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px">
+      {% for c in feed %}
+      <div style="background:var(--dk-card2);border:1px solid var(--dk-border);border-radius:10px;overflow:hidden">
+        <div style="aspect-ratio:1/1;background:#0b1220;display:flex;align-items:center;justify-content:center">
+          {% if c.archivo_nombre.lower().endswith(('.mp4','.mov','.avi')) %}
+          <video src="{{ url_for('feed_stories.ver_archivo', id=c.id) }}" style="width:100%;height:100%;object-fit:cover" muted></video>
+          {% else %}
+          <img src="{{ url_for('feed_stories.ver_archivo', id=c.id) }}" style="width:100%;height:100%;object-fit:cover">
+          {% endif %}
+        </div>
+        <div style="padding:8px">
+          <div style="font-size:10px;color:var(--text3)">{{ c.fecha_publicacion }} {{ c.hora_publicacion or '' }}</div>
+          <div style="font-size:11px;color:var(--text1);font-weight:600">{{ c.archivo_nombre }}</div>
         </div>
       </div>
       {% else %}
@@ -68,74 +61,63 @@
     </div>
   </div>
 
-  <div class="glow-card" style="margin-bottom:12px">
-    <div class="section-label">Feed del mes por dia</div>
-    <table class="dark-table">
-      <thead><tr><th>Fecha</th><th>Archivo</th><th>Copy</th><th>Responsable</th><th>Estado</th><th>Acciones</th></tr></thead>
-      <tbody>
-        {% for c in feed %}
-        <tr>
-          <td>{{ c.fecha_publicacion }} {{ c.hora_publicacion }}</td>
-          <td>{{ c.archivo_nombre }}</td>
-          <td style="max-width:260px">{{ c.copy_texto or '—' }}</td>
-          <td>{{ c.responsable_nombre or '—' }}</td>
-          <td>{% if c.estado == 'publicado' %}<span class="badge-green">publicado</span>{% else %}<span class="badge-amber">pendiente</span>{% endif %}</td>
-          <td>
-            <div style="display:flex;gap:6px">
-              <a class="btn-glow btn-ghost" style="font-size:10px;padding:4px 8px" href="{{ url_for('feed_stories.descargar', id=c.id) }}">Descargar</a>
-              {% if c.estado != 'publicado' %}
-              <form method="POST" action="{{ url_for('feed_stories.marcar_publicado', id=c.id) }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button class="btn-glow btn-success-glow" style="font-size:10px;padding:4px 8px">Publicado</button>
-              </form>
-              {% endif %}
+  {% macro render_cards(grupos, tipo_label) %}
+    {% if grupos %}
+      {% for semana, fechas in grupos.items() %}
+      <div class="glow-card" style="margin-bottom:12px">
+        <div class="section-label">{{ tipo_label }} · {{ semana }}</div>
+        {% for fecha, items in fechas.items() %}
+        <div style="margin-bottom:12px">
+          <div style="font-size:11px;color:var(--cyan);font-weight:600;margin-bottom:8px">Carpeta {{ fecha }}</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px">
+            {% for c in items %}
+            <div style="background:var(--dk-card2);border:1px solid var(--dk-border);border-radius:10px;overflow:hidden">
+              <div style="aspect-ratio:9/11;background:#0b1220;display:flex;align-items:center;justify-content:center">
+                {% if c.archivo_nombre.lower().endswith(('.mp4','.mov','.avi')) %}
+                <video src="{{ url_for('feed_stories.ver_archivo', id=c.id) }}" style="width:100%;height:100%;object-fit:cover" controls muted></video>
+                {% else %}
+                <img src="{{ url_for('feed_stories.ver_archivo', id=c.id) }}" style="width:100%;height:100%;object-fit:cover">
+                {% endif %}
+              </div>
+              <div style="padding:10px">
+                <div style="font-size:10px;color:var(--text3);margin-bottom:6px">{{ c.archivo_nombre }}</div>
+                <form method="POST" action="{{ url_for('feed_stories.actualizar_card', id=c.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+                    <input class="dark-input" type="time" name="hora_publicacion" value="{{ c.hora_publicacion if c.hora_publicacion else '' }}">
+                    <select class="dark-input" name="responsable_id">
+                      <option value="">Sin responsable</option>
+                      {% for u in usuarios %}
+                      <option value="{{ u.id }}" {% if c.responsable_id == u.id %}selected{% endif %}>{{ u.nombre }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <textarea class="dark-input" name="copy_texto" rows="2" placeholder="Copy">{{ c.copy_texto or '' }}</textarea>
+                  <textarea class="dark-input" name="observacion" rows="2" placeholder="Observación" style="margin-top:6px">{{ c.observacion or '' }}</textarea>
+                  <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+                    <a class="btn-glow btn-ghost" style="font-size:10px;padding:4px 8px" href="{{ url_for('feed_stories.descargar', id=c.id) }}">Descargar</a>
+                    {% if c.estado != 'publicado' %}
+                    <button formaction="{{ url_for('feed_stories.marcar_publicado', id=c.id) }}" class="btn-glow btn-success-glow" style="font-size:10px;padding:4px 8px">Publicado</button>
+                    {% else %}
+                    <span class="badge-green">publicado</span>
+                    {% endif %}
+                    <button type="submit" class="btn-glow btn-primary-glow" style="font-size:10px;padding:4px 8px">Guardar</button>
+                  </div>
+                </form>
+              </div>
             </div>
-            <form method="POST" action="{{ url_for('feed_stories.guardar_observacion', id=c.id) }}" style="margin-top:6px">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <input class="dark-input" name="observacion" placeholder="Observación" value="{{ c.observacion or '' }}">
-            </form>
-          </td>
-        </tr>
-        {% else %}
-        <tr><td colspan="6" style="text-align:center;color:var(--text3)">Sin contenidos feed cargados.</td></tr>
+            {% endfor %}
+          </div>
+        </div>
         {% endfor %}
-      </tbody>
-    </table>
-  </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="glow-card" style="margin-bottom:12px;color:var(--text3)">Sin contenidos {{ tipo_label|lower }} cargados.</div>
+    {% endif %}
+  {% endmacro %}
 
-  <div class="glow-card">
-    <div class="section-label">Stories del mes por dia</div>
-    <table class="dark-table">
-      <thead><tr><th>Fecha</th><th>Archivo</th><th>Copy</th><th>Responsable</th><th>Estado</th><th>Acciones</th></tr></thead>
-      <tbody>
-        {% for c in stories %}
-        <tr>
-          <td>{{ c.fecha_publicacion }} {{ c.hora_publicacion }}</td>
-          <td>{{ c.archivo_nombre }}</td>
-          <td style="max-width:260px">{{ c.copy_texto or 'â€”' }}</td>
-          <td>{{ c.responsable_nombre or 'â€”' }}</td>
-          <td>{% if c.estado == 'publicado' %}<span class="badge-green">publicado</span>{% else %}<span class="badge-amber">pendiente</span>{% endif %}</td>
-          <td>
-            <div style="display:flex;gap:6px">
-              <a class="btn-glow btn-ghost" style="font-size:10px;padding:4px 8px" href="{{ url_for('feed_stories.descargar', id=c.id) }}">Descargar</a>
-              {% if c.estado != 'publicado' %}
-              <form method="POST" action="{{ url_for('feed_stories.marcar_publicado', id=c.id) }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button class="btn-glow btn-success-glow" style="font-size:10px;padding:4px 8px">Publicado</button>
-              </form>
-              {% endif %}
-            </div>
-            <form method="POST" action="{{ url_for('feed_stories.guardar_observacion', id=c.id) }}" style="margin-top:6px">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <input class="dark-input" name="observacion" placeholder="ObservaciÃ³n" value="{{ c.observacion or '' }}">
-            </form>
-          </td>
-        </tr>
-        {% else %}
-        <tr><td colspan="6" style="text-align:center;color:var(--text3)">Sin contenidos stories cargados.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+  {{ render_cards(feed_grupos, 'Feed') }}
+  {{ render_cards(stories_grupos, 'Stories') }}
 </div>
 {% endblock %}
