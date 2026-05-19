@@ -26,6 +26,31 @@ def _build_preview_path(ruta_original):
     return f"{base}__preview.mp4"
 
 
+def _resolve_ruta_guardada(ruta_db):
+    if not ruta_db:
+        return None
+
+    if os.path.exists(ruta_db):
+        return ruta_db
+
+    normal = str(ruta_db).replace('\\', '/')
+
+    if normal.startswith('static/uploads/'):
+        candidata = os.path.join(current_app.root_path, normal.replace('/', os.sep))
+        if os.path.exists(candidata):
+            return candidata
+
+    marker = '/uploads/'
+    idx = normal.lower().find(marker)
+    if idx != -1:
+        sub = normal[idx + 1:]  # uploads/...
+        candidata = os.path.join(current_app.root_path, 'static', sub.replace('/', os.sep))
+        if os.path.exists(candidata):
+            return candidata
+
+    return None
+
+
 def _crear_preview_video(ruta_original):
     """Crea mp4 web-compatible para previsualizacion. Mantiene original para descarga."""
     preview = _build_preview_path(ruta_original)
@@ -180,13 +205,24 @@ def nuevo():
         if nombre_original.lower().endswith(('.mov', '.avi', '.mp4')):
             _crear_preview_video(ruta)
 
+        ruta_rel = os.path.join(
+            'static',
+            'uploads',
+            'feed_stories',
+            tipo,
+            f'{fecha_dt.year:04d}',
+            f'{fecha_dt.month:02d}',
+            f'{fecha_dt.day:02d}',
+            final_name,
+        )
+
         nuevo_id = FeedStoryDAO.insertar(
             tipo=tipo,
             fecha_publicacion=fecha_publicacion,
             hora_publicacion=hora_publicacion,
             copy_texto=copy_texto,
             archivo_nombre=nombre_original,
-            archivo_ruta=ruta,
+            archivo_ruta=ruta_rel,
             responsable_id=responsable_id,
             observacion=observacion,
         )
@@ -214,14 +250,10 @@ def descargar(id):
     if not item:
         flash('Contenido no encontrado.', 'error')
         return redirect(url_for('feed_stories.index'))
-    ruta = item['archivo_ruta']
-    if not os.path.exists(ruta):
-        alt = os.path.join(current_app.config['UPLOAD_FOLDER'], 'feed_stories', item['archivo_nombre'])
-        if os.path.exists(alt):
-            ruta = alt
-        else:
-            flash('Archivo no encontrado en servidor.', 'error')
-            return redirect(url_for('feed_stories.index'))
+    ruta = _resolve_ruta_guardada(item.get('archivo_ruta'))
+    if not ruta or not os.path.exists(ruta):
+        flash('Archivo no encontrado en servidor.', 'error')
+        return redirect(url_for('feed_stories.index'))
     return send_file(ruta, as_attachment=True, download_name=item['archivo_nombre'])
 
 
@@ -232,7 +264,9 @@ def ver_archivo(id):
     item = FeedStoryDAO.obtener(id)
     if not item:
         abort(404)
-    ruta = item['archivo_ruta']
+    ruta = _resolve_ruta_guardada(item.get('archivo_ruta'))
+    if not ruta:
+        abort(404)
     use_preview = request.args.get('preview') == '1'
     if use_preview and item.get('archivo_nombre', '').lower().endswith(('.mov', '.avi', '.mp4')):
         preview = _build_preview_path(ruta)
