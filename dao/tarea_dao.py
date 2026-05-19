@@ -130,27 +130,16 @@ class TareaDAO:
         try:
             conn = Conexion.obtener_conexion()
             cursor = conn.cursor()
-            if Conexion.es_postgres():
-                sql = """UPDATE tareas
-                         SET estado = 'postergada',
-                             fecha_entrega = %s,
-                             postergaciones = COALESCE(postergaciones, '[]'::jsonb) ||
-                                jsonb_build_array(
-                                    jsonb_build_object('motivo', %s, 'fecha', NOW())
-                                )
-                         WHERE id = %s"""
-                cursor.execute(sql, (nueva_fecha, motivo, id))
-            else:
-                sql = """UPDATE tareas
-                         SET estado = 'postergada',
-                             fecha_entrega = %s,
-                             postergaciones = JSON_ARRAY_APPEND(
-                                 COALESCE(postergaciones, JSON_ARRAY()),
-                                 '$',
-                                 JSON_OBJECT('motivo', %s, 'fecha', NOW())
-                             )
-                         WHERE id = %s"""
-                cursor.execute(sql, (nueva_fecha, motivo, id))
+            sql = """UPDATE tareas
+                     SET estado = 'postergada',
+                         fecha_entrega = %s,
+                         postergaciones = JSON_ARRAY_APPEND(
+                             COALESCE(postergaciones, JSON_ARRAY()),
+                             '$',
+                             JSON_OBJECT('motivo', %s, 'fecha', NOW())
+                         )
+                     WHERE id = %s"""
+            cursor.execute(sql, (nueva_fecha, motivo, id))
             conn.commit()
             return cursor.rowcount
         except Exception as e:

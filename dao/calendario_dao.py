@@ -9,15 +9,9 @@ class CalendarioDAO:
         try:
             conn   = Conexion.obtener_conexion()
             cursor = conn.cursor(dictionary=True)
-            if Conexion.es_postgres():
-                cursor.execute("""SELECT * FROM cal_eventos
-                                  WHERE EXTRACT(MONTH FROM fecha)=%s
-                                    AND EXTRACT(YEAR FROM fecha)=%s
-                                  ORDER BY fecha""", (mes, anio))
-            else:
-                cursor.execute("""SELECT * FROM cal_eventos
-                                  WHERE MONTH(fecha)=%s AND YEAR(fecha)=%s
-                                  ORDER BY fecha""", (mes, anio))
+            cursor.execute("""SELECT * FROM cal_eventos
+                              WHERE MONTH(fecha)=%s AND YEAR(fecha)=%s
+                              ORDER BY fecha""", (mes, anio))
             return cursor.fetchall()
         except Exception as e:
             print(f"❌ Error listar eventos: {e}")
@@ -31,14 +25,9 @@ class CalendarioDAO:
         try:
             conn   = Conexion.obtener_conexion()
             cursor = conn.cursor(dictionary=True)
-            if Conexion.es_postgres():
-                cursor.execute("""SELECT * FROM cal_eventos
-                                  WHERE EXTRACT(YEAR FROM fecha)=%s
-                                  ORDER BY fecha""", (anio,))
-            else:
-                cursor.execute("""SELECT * FROM cal_eventos
-                                  WHERE YEAR(fecha)=%s
-                                  ORDER BY fecha""", (anio,))
+            cursor.execute("""SELECT * FROM cal_eventos
+                              WHERE YEAR(fecha)=%s
+                              ORDER BY fecha""", (anio,))
             return cursor.fetchall()
         except Exception as e:
             print(f"❌ Error listar eventos año: {e}")
@@ -52,15 +41,9 @@ class CalendarioDAO:
         try:
             conn   = Conexion.obtener_conexion()
             cursor = conn.cursor(dictionary=True)
-            if Conexion.es_postgres():
-                cursor.execute("""SELECT * FROM cal_eventos
-                                  WHERE destacado=1
-                                    AND EXTRACT(YEAR FROM fecha)=%s
-                                  ORDER BY fecha""", (anio,))
-            else:
-                cursor.execute("""SELECT * FROM cal_eventos
-                                  WHERE destacado=1 AND YEAR(fecha)=%s
-                                  ORDER BY fecha""", (anio,))
+            cursor.execute("""SELECT * FROM cal_eventos
+                              WHERE destacado=1 AND YEAR(fecha)=%s
+                              ORDER BY fecha""", (anio,))
             return cursor.fetchall()
         except Exception as e:
             print(f"❌ Error listar destacados: {e}")
