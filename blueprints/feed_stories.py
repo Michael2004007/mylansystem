@@ -28,6 +28,7 @@ def index():
     anio = request.args.get('anio', type=int, default=hoy.year)
     mes = request.args.get('mes', type=int, default=hoy.month)
     tipo = request.args.get('tipo') or 'feed'
+    vista = request.args.get('vista') or 'carpetas'  # carpetas | preview
     semana = request.args.get('semana')
     dia_semana = None
     contenidos = FeedStoryDAO.listar(anio=anio, mes=mes, tipo=tipo, dia_semana=dia_semana)
@@ -63,8 +64,19 @@ def index():
     stories_grupos = _agrupar(stories)
     grupos_actual = feed_grupos if tipo == 'feed' else stories_grupos
     semanas = list(grupos_actual.keys())
-    semana_activa = semana if semana in grupos_actual else (semanas[0] if semanas else None)
+    semana_activa = semana if semana in grupos_actual else None
     contenidos_semana = grupos_actual.get(semana_activa, {}) if semana_activa else {}
+
+    # Previsualizacion estilo feed (orden cronologico)
+    feed_sorted = sorted(
+        feed,
+        key=lambda x: (str(x.get('fecha_publicacion') or ''), str(x.get('hora_publicacion') or ''), x.get('id') or 0)
+    )
+    last_published_idx = -1
+    for i, item in enumerate(feed_sorted):
+        if item.get('estado') == 'publicado':
+            last_published_idx = i
+    next_idx = last_published_idx + 1 if (last_published_idx + 1) < len(feed_sorted) else None
 
     return render_template(
         'feed_stories/index.html',
@@ -78,6 +90,10 @@ def index():
         anio=anio,
         mes=mes,
         tipo=tipo,
+        vista=vista,
+        feed_preview=feed_sorted,
+        last_published_idx=last_published_idx,
+        next_idx=next_idx,
         hoy=hoy,
     )
 
@@ -92,7 +108,7 @@ def nuevo():
     copy_texto = None
     responsable_id = None
     observacion = None
-    archivo = request.files.get('archivo')
+    archivos = request.files.getlist('archivo')
     mes_vista = request.form.get('mes_vista', type=int)
     anio_vista = request.form.get('anio_vista', type=int)
 
@@ -101,11 +117,8 @@ def nuevo():
             return redirect(url_for('feed_stories.index', anio=anio_vista, mes=mes_vista))
         return redirect(url_for('feed_stories.index'))
 
-    if tipo not in ('feed', 'stories') or not fecha_publicacion or not archivo:
+    if tipo not in ('feed', 'stories') or not fecha_publicacion or not archivos:
         flash('Completa tipo, fecha y archivo.', 'error')
-        return _back()
-    if not _allowed(archivo.filename):
-        flash('Formato no permitido.', 'error')
         return _back()
 
     try:
@@ -114,7 +127,6 @@ def nuevo():
         flash('Fecha invalida.', 'error')
         return _back()
 
-    nombre_original = secure_filename(archivo.filename)
     carpeta = os.path.join(
         current_app.config['UPLOAD_FOLDER'],
         'feed_stories',
@@ -124,36 +136,43 @@ def nuevo():
         f'{fecha_dt.day:02d}',
     )
     os.makedirs(carpeta, exist_ok=True)
-    final_name = f"{uuid4().hex}_{nombre_original}"
-    ruta = os.path.join(carpeta, final_name)
-
-    try:
-        archivo.save(ruta)
-    except Exception:
-        flash('No se pudo guardar el archivo.', 'error')
-        return _back()
-
-    nuevo_id = FeedStoryDAO.insertar(
-        tipo=tipo,
-        fecha_publicacion=fecha_publicacion,
-        hora_publicacion=hora_publicacion,
-        copy_texto=copy_texto,
-        archivo_nombre=nombre_original,
-        archivo_ruta=ruta,
-        responsable_id=responsable_id,
-        observacion=observacion,
-    )
-
-    if not nuevo_id:
+    subidos = 0
+    for archivo in archivos:
+        if not archivo or not archivo.filename:
+            continue
+        if not _allowed(archivo.filename):
+            continue
+        nombre_original = secure_filename(archivo.filename)
+        final_name = f"{uuid4().hex}_{nombre_original}"
+        ruta = os.path.join(carpeta, final_name)
         try:
-            if os.path.exists(ruta):
-                os.remove(ruta)
-        except OSError:
-            pass
-        flash('No se pudo registrar el contenido en base de datos.', 'error')
-        return _back()
+            archivo.save(ruta)
+        except Exception:
+            continue
 
-    flash('Contenido cargado.', 'success')
+        nuevo_id = FeedStoryDAO.insertar(
+            tipo=tipo,
+            fecha_publicacion=fecha_publicacion,
+            hora_publicacion=hora_publicacion,
+            copy_texto=copy_texto,
+            archivo_nombre=nombre_original,
+            archivo_ruta=ruta,
+            responsable_id=responsable_id,
+            observacion=observacion,
+        )
+        if not nuevo_id:
+            try:
+                if os.path.exists(ruta):
+                    os.remove(ruta)
+            except OSError:
+                pass
+            continue
+        subidos += 1
+
+    if subidos == 0:
+        flash('No se pudo cargar ningun archivo.', 'error')
+    else:
+        flash(f'Contenidos cargados: {subidos}', 'success')
     return _back()
 
 
