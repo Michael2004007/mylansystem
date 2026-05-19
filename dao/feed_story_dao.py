@@ -1,3 +1,4 @@
+import mimetypes
 from conexion import Conexion
 
 
@@ -32,9 +33,14 @@ class FeedStoryDAO:
             if tipo:
                 sql += " AND fs.tipo = %s"
                 params.append(tipo)
-            sql += " ORDER BY fs.fecha_publicacion, fs.hora_publicacion, fs.id"
+            sql += " ORDER BY fs.fecha_publicacion DESC, fs.hora_publicacion DESC, fs.id DESC"
             cursor.execute(sql, tuple(params))
-            return cursor.fetchall()
+            rows = cursor.fetchall()
+            for r in rows:
+                nombre = (r.get('archivo_nombre') or '').lower()
+                r['is_video'] = nombre.endswith(('.mp4', '.mov', '.avi', '.m4v', '.webm'))
+                r['mime_type'] = mimetypes.guess_type(r.get('archivo_nombre') or '')[0] or ''
+            return rows
         except Exception as e:
             print(f"Error listar feed/stories: {e}")
             return []

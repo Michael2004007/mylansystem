@@ -1,6 +1,7 @@
 import os
 from uuid import uuid4
 from datetime import date, datetime
+import mimetypes
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, send_file, abort
 from flask_login import login_required
 from werkzeug.utils import secure_filename
@@ -26,8 +27,9 @@ def index():
     hoy = date.today()
     anio = request.args.get('anio', type=int, default=hoy.year)
     mes = request.args.get('mes', type=int, default=hoy.month)
-    tipo = request.args.get('tipo') or None
-    dia_semana = request.args.get('dia_semana', type=int)
+    tipo = request.args.get('tipo') or 'feed'
+    semana = request.args.get('semana')
+    dia_semana = None
     contenidos = FeedStoryDAO.listar(anio=anio, mes=mes, tipo=tipo, dia_semana=dia_semana)
     usuarios = UsuarioDAO.listar()
 
@@ -59,17 +61,23 @@ def index():
 
     feed_grupos = _agrupar(feed)
     stories_grupos = _agrupar(stories)
+    grupos_actual = feed_grupos if tipo == 'feed' else stories_grupos
+    semanas = list(grupos_actual.keys())
+    semana_activa = semana if semana in grupos_actual else (semanas[0] if semanas else None)
+    contenidos_semana = grupos_actual.get(semana_activa, {}) if semana_activa else {}
 
     return render_template(
         'feed_stories/index.html',
         contenidos=contenidos,
         feed=feed,
         stories=stories,
-        feed_grupos=feed_grupos,
-        stories_grupos=stories_grupos,
+        semanas=semanas,
+        semana_activa=semana_activa,
+        contenidos_semana=contenidos_semana,
         usuarios=usuarios,
         anio=anio,
         mes=mes,
+        tipo=tipo,
         hoy=hoy,
     )
 
@@ -80,10 +88,10 @@ def index():
 def nuevo():
     tipo = request.form.get('tipo')
     fecha_publicacion = request.form.get('fecha_publicacion')
-    hora_publicacion = request.form.get('hora_publicacion') or '09:00'
-    copy_texto = request.form.get('copy_texto')
-    responsable_id = request.form.get('responsable_id', type=int)
-    observacion = request.form.get('observacion')
+    hora_publicacion = '09:00'
+    copy_texto = None
+    responsable_id = None
+    observacion = None
     archivo = request.files.get('archivo')
     mes_vista = request.form.get('mes_vista', type=int)
     anio_vista = request.form.get('anio_vista', type=int)
@@ -155,10 +163,16 @@ def nuevo():
 def descargar(id):
     item = FeedStoryDAO.obtener(id)
     if not item:
-        abort(404)
+        flash('Contenido no encontrado.', 'error')
+        return redirect(url_for('feed_stories.index'))
     ruta = item['archivo_ruta']
     if not os.path.exists(ruta):
-        abort(404)
+        alt = os.path.join(current_app.config['UPLOAD_FOLDER'], 'feed_stories', item['archivo_nombre'])
+        if os.path.exists(alt):
+            ruta = alt
+        else:
+            flash('Archivo no encontrado en servidor.', 'error')
+            return redirect(url_for('feed_stories.index'))
     return send_file(ruta, as_attachment=True, download_name=item['archivo_nombre'])
 
 
@@ -172,7 +186,8 @@ def ver_archivo(id):
     ruta = item['archivo_ruta']
     if not os.path.exists(ruta):
         abort(404)
-    return send_file(ruta)
+    mime = mimetypes.guess_type(item['archivo_nombre'] or '')[0]
+    return send_file(ruta, mimetype=mime or None)
 
 
 @feed_stories_bp.route('/publicado/<int:id>', methods=['POST'])
