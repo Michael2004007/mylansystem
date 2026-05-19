@@ -102,26 +102,38 @@
         <div style="background:var(--dk-card2);border:1px solid var(--dk-border);border-radius:10px;overflow:hidden">
           <div style="aspect-ratio:4/5;background:#0b1220">
             {% if c.is_video %}
-            <video src="{{ url_for('feed_stories.ver_archivo', id=c.id) }}" controls muted preload="metadata"
-                   style="width:100%;height:100%;object-fit:cover"></video>
+              {% if c.mime_type in ['video/mp4', 'video/webm', 'video/ogg'] %}
+              <video controls muted preload="metadata" playsinline style="width:100%;height:100%;object-fit:cover">
+                <source src="{{ url_for('feed_stories.ver_archivo', id=c.id) }}" type="{{ c.mime_type }}">
+                Tu navegador no puede previsualizar este video.
+              </video>
+              {% else %}
+              <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:11px;padding:16px;text-align:center">
+                Vista previa no compatible para este formato de video.
+              </div>
+              {% endif %}
             {% else %}
             <img src="{{ url_for('feed_stories.ver_archivo', id=c.id) }}" style="width:100%;height:100%;object-fit:cover">
             {% endif %}
           </div>
           <div style="padding:10px">
-                <div style="font-size:11px;color:var(--text1);font-weight:600">{{ c.archivo_nombre }}</div>
-                <div style="font-size:10px;color:var(--text3);margin-top:2px">{{ c.fecha_publicacion }}</div>
-                <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
-                  <a class="btn-glow btn-ghost" style="font-size:10px;padding:4px 8px" href="{{ url_for('feed_stories.descargar', id=c.id) }}">Descargar</a>
-                  {% if c.estado != 'publicado' %}
-              <form method="POST" action="{{ url_for('feed_stories.marcar_publicado', id=c.id) }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button class="btn-glow btn-success-glow" style="font-size:10px;padding:4px 8px">Publicado</button>
-              </form>
-              {% else %}
-              <span class="badge-green">publicado</span>
-              {% endif %}
-            </div>
+            <div style="font-size:11px;color:var(--text1);font-weight:600">{{ c.archivo_nombre }}</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:2px">{{ c.fecha_publicacion }}</div>
+            <form method="POST" action="{{ url_for('feed_stories.actualizar_card', id=c.id) }}" style="margin-top:8px">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input class="dark-input" type="time" name="hora_publicacion" value="{{ c.hora_publicacion if c.hora_publicacion else '' }}" style="margin-bottom:6px">
+              <textarea class="dark-input" name="copy_texto" rows="2" placeholder="Copy" style="margin-bottom:6px">{{ c.copy_texto or '' }}</textarea>
+              <textarea class="dark-input" name="observacion" rows="2" placeholder="Observación" style="margin-bottom:8px">{{ c.observacion or '' }}</textarea>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <a class="btn-glow btn-ghost" style="font-size:10px;padding:4px 8px" href="{{ url_for('feed_stories.descargar', id=c.id) }}">Descargar</a>
+                {% if c.estado != 'publicado' %}
+                <button formaction="{{ url_for('feed_stories.marcar_publicado', id=c.id) }}" class="btn-glow btn-success-glow" style="font-size:10px;padding:4px 8px">Publicado</button>
+                {% else %}
+                <span class="badge-green">publicado</span>
+                {% endif %}
+                <button type="submit" class="btn-glow btn-primary-glow" style="font-size:10px;padding:4px 8px">Guardar</button>
+              </div>
+            </form>
           </div>
         </div>
         {% endfor %}
