@@ -20,6 +20,7 @@ from blueprints.feed_stories import feed_stories_bp
 from dao.usuario_dao import UsuarioDAO
 from dao.permiso_dao import PermisoDAO
 from dao.configuracion_dao import ConfiguracionDAO
+from dao.db_bootstrap import bootstrap_schema
 
 # Cargar variables de entorno desde .env (solo en desarrollo local)
 load_dotenv()
@@ -36,6 +37,9 @@ csrf = CSRFProtect(app)
 os.makedirs('static/uploads', exist_ok=True)
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['MAX_CONTENT_LENGTH'] = 52428800  # 50MB
+
+# Auto-bootstrap de tablas nuevas en Railway/local
+bootstrap_schema()
 
 # Flask-Login
 login_manager = LoginManager()
