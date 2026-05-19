@@ -63,7 +63,8 @@ CREATE TABLE IF NOT EXISTS influencers (
   whatsapp VARCHAR(60) NULL,
   estado VARCHAR(30) NOT NULL DEFAULT 'nuevo',
   notas TEXT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  UNIQUE (handle)
 );
 
 CREATE TABLE IF NOT EXISTS colaboraciones (
