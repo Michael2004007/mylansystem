@@ -74,24 +74,14 @@ class PermisoDAO:
         try:
             conn = Conexion.obtener_conexion()
             cursor = conn.cursor()
-            if Conexion.es_postgres():
-                cursor.execute("""
-                    INSERT INTO permisos_usuario (usuario_id, modulo, puede_ver, puede_editar, puede_aprobar)
-                    VALUES (%s, %s, %s, %s, %s)
-                    ON CONFLICT (usuario_id, modulo) DO UPDATE SET
-                        puede_ver = EXCLUDED.puede_ver,
-                        puede_editar = EXCLUDED.puede_editar,
-                        puede_aprobar = EXCLUDED.puede_aprobar
-                """, (usuario_id, modulo, puede_ver, puede_editar, puede_aprobar))
-            else:
-                cursor.execute("""
-                    INSERT INTO permisos_usuario (usuario_id, modulo, puede_ver, puede_editar, puede_aprobar)
-                    VALUES (%s, %s, %s, %s, %s)
-                    ON DUPLICATE KEY UPDATE 
-                        puede_ver = VALUES(puede_ver),
-                        puede_editar = VALUES(puede_editar),
-                        puede_aprobar = VALUES(puede_aprobar)
-                """, (usuario_id, modulo, puede_ver, puede_editar, puede_aprobar))
+            cursor.execute("""
+                INSERT INTO permisos_usuario (usuario_id, modulo, puede_ver, puede_editar, puede_aprobar)
+                VALUES (%s, %s, %s, %s, %s)
+                ON DUPLICATE KEY UPDATE 
+                    puede_ver = VALUES(puede_ver),
+                    puede_editar = VALUES(puede_editar),
+                    puede_aprobar = VALUES(puede_aprobar)
+            """, (usuario_id, modulo, puede_ver, puede_editar, puede_aprobar))
             conn.commit()
             return True
         except Exception as e:

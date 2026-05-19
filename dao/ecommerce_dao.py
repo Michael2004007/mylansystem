@@ -155,16 +155,10 @@ class EcommerceDAO:
 
             conn = Conexion.obtener_conexion()
             cursor = conn.cursor()
-            if Conexion.es_postgres():
-                cursor.execute("""INSERT INTO metas (mes, anio, meta)
-                                  VALUES (%s, %s, %s)
-                                  ON CONFLICT (mes, anio) DO UPDATE SET meta = EXCLUDED.meta""",
-                               (mes, anio, meta))
-            else:
-                cursor.execute("""INSERT INTO metas (mes, anio, meta)
-                                  VALUES (%s, %s, %s)
-                                  ON DUPLICATE KEY UPDATE meta=%s""",
-                               (mes, anio, meta, meta))
+            cursor.execute("""INSERT INTO metas (mes, anio, meta)
+                              VALUES (%s, %s, %s)
+                              ON DUPLICATE KEY UPDATE meta=%s""",
+                           (mes, anio, meta, meta))
             conn.commit()
             return cursor.rowcount
         except ValueError as ve:
@@ -214,7 +208,7 @@ class EcommerceDAO:
                     m.mes,
                     m.anio,
                     m.meta,
-                    COALESCE(SUM(v.monto), 0) AS real
+                    COALESCE(SUM(v.monto), 0) AS `real`
                 FROM metas m
                 LEFT JOIN ecom_ventas v 
                     ON v.mes = m.mes AND v.anio = m.anio

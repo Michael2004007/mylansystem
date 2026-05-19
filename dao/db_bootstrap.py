@@ -5,9 +5,6 @@ def bootstrap_schema():
     conn = None
     cursor = None
     try:
-        if Conexion.es_postgres():
-            print("Schema bootstrap omitido en Postgres (usar migraciones SQL).")
-            return
         conn = Conexion.obtener_conexion()
         if not conn:
             return
