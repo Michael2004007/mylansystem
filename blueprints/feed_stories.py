@@ -1,6 +1,6 @@
 import os
 from uuid import uuid4
-from datetime import date
+from datetime import date, datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, send_file, abort
 from flask_login import login_required
 from werkzeug.utils import secure_filename
@@ -30,13 +30,21 @@ def index():
     dia_semana = request.args.get('dia_semana', type=int)
     contenidos = FeedStoryDAO.listar(anio=anio, mes=mes, tipo=tipo, dia_semana=dia_semana)
     usuarios = UsuarioDAO.listar()
+
+    feed = [c for c in contenidos if c.get('tipo') == 'feed']
+    stories = [c for c in contenidos if c.get('tipo') == 'stories']
+    dias = sorted({str(c.get('fecha_publicacion')) for c in contenidos if c.get('fecha_publicacion')})
+
     return render_template(
         'feed_stories/index.html',
         contenidos=contenidos,
+        feed=feed,
+        stories=stories,
+        dias=dias,
         usuarios=usuarios,
         anio=anio,
         mes=mes,
-        hoy=hoy
+        hoy=hoy,
     )
 
 
@@ -51,22 +59,47 @@ def nuevo():
     responsable_id = request.form.get('responsable_id', type=int)
     observacion = request.form.get('observacion')
     archivo = request.files.get('archivo')
+    mes_vista = request.form.get('mes_vista', type=int)
+    anio_vista = request.form.get('anio_vista', type=int)
+
+    def _back():
+        if anio_vista and mes_vista:
+            return redirect(url_for('feed_stories.index', anio=anio_vista, mes=mes_vista))
+        return redirect(url_for('feed_stories.index'))
 
     if tipo not in ('feed', 'stories') or not fecha_publicacion or not hora_publicacion or not archivo:
-        flash('Completá tipo, fecha, hora y archivo.', 'error')
-        return redirect(url_for('feed_stories.index'))
+        flash('Completa tipo, fecha, hora y archivo.', 'error')
+        return _back()
     if not _allowed(archivo.filename):
         flash('Formato no permitido.', 'error')
-        return redirect(url_for('feed_stories.index'))
+        return _back()
+
+    try:
+        fecha_dt = datetime.strptime(fecha_publicacion, '%Y-%m-%d')
+    except ValueError:
+        flash('Fecha invalida.', 'error')
+        return _back()
 
     nombre_original = secure_filename(archivo.filename)
-    carpeta = os.path.join(current_app.config['UPLOAD_FOLDER'], 'feed_stories')
+    carpeta = os.path.join(
+        current_app.config['UPLOAD_FOLDER'],
+        'feed_stories',
+        tipo,
+        f'{fecha_dt.year:04d}',
+        f'{fecha_dt.month:02d}',
+        f'{fecha_dt.day:02d}',
+    )
     os.makedirs(carpeta, exist_ok=True)
     final_name = f"{uuid4().hex}_{nombre_original}"
     ruta = os.path.join(carpeta, final_name)
-    archivo.save(ruta)
 
-    FeedStoryDAO.insertar(
+    try:
+        archivo.save(ruta)
+    except Exception:
+        flash('No se pudo guardar el archivo.', 'error')
+        return _back()
+
+    nuevo_id = FeedStoryDAO.insertar(
         tipo=tipo,
         fecha_publicacion=fecha_publicacion,
         hora_publicacion=hora_publicacion,
@@ -74,10 +107,20 @@ def nuevo():
         archivo_nombre=nombre_original,
         archivo_ruta=ruta,
         responsable_id=responsable_id,
-        observacion=observacion
+        observacion=observacion,
     )
+
+    if not nuevo_id:
+        try:
+            if os.path.exists(ruta):
+                os.remove(ruta)
+        except OSError:
+            pass
+        flash('No se pudo registrar el contenido en base de datos.', 'error')
+        return _back()
+
     flash('Contenido cargado.', 'success')
-    return redirect(url_for('feed_stories.index'))
+    return _back()
 
 
 @feed_stories_bp.route('/descargar/<int:id>')
@@ -97,8 +140,10 @@ def descargar(id):
 @login_required
 @requiere_permiso('feed_stories', requiere_editar=True)
 def marcar_publicado(id):
-    FeedStoryDAO.marcar_publicado(id)
-    flash('Marcado como publicado.', 'success')
+    if not FeedStoryDAO.marcar_publicado(id):
+        flash('No se pudo actualizar el estado.', 'error')
+    else:
+        flash('Marcado como publicado.', 'success')
     return redirect(request.referrer or url_for('feed_stories.index'))
 
 
@@ -106,8 +151,10 @@ def marcar_publicado(id):
 @login_required
 @requiere_permiso('feed_stories', requiere_editar=True)
 def guardar_observacion(id):
-    FeedStoryDAO.actualizar_observacion(id, request.form.get('observacion'))
-    flash('Observación guardada.', 'success')
+    if not FeedStoryDAO.actualizar_observacion(id, request.form.get('observacion')):
+        flash('No se pudo guardar la observacion.', 'error')
+    else:
+        flash('Observacion guardada.', 'success')
     return redirect(request.referrer or url_for('feed_stories.index'))
 
 
@@ -131,7 +178,7 @@ def idea_nueva():
         mes = int(request.form.get('mes') or 0)
         anio = int(request.form.get('anio') or 0)
     except ValueError:
-        flash('Mes/año inválidos.', 'error')
+        flash('Mes/anio invalidos.', 'error')
         return redirect(url_for('feed_stories.ideas'))
     IdeaFeedStoryDAO.insertar(
         tipo=request.form.get('tipo'),
@@ -141,7 +188,7 @@ def idea_nueva():
         mes=mes,
         anio=anio,
         agrupador=request.form.get('agrupador'),
-        responsable_id=request.form.get('responsable_id', type=int)
+        responsable_id=request.form.get('responsable_id', type=int),
     )
     flash('Idea guardada.', 'success')
     return redirect(url_for('feed_stories.ideas', anio=anio, mes=mes))
@@ -156,5 +203,5 @@ def idea_pasar(id):
         flash('Idea no encontrada.', 'error')
         return redirect(url_for('feed_stories.ideas'))
     IdeaFeedStoryDAO.marcar_pasada(id)
-    flash('Idea marcada como pasada a operativo. Cargá el archivo en Feed & Stories.', 'success')
+    flash('Idea marcada como pasada a operativo. Carga el archivo en Feed & Stories.', 'success')
     return redirect(url_for('feed_stories.ideas', anio=idea['anio'], mes=idea['mes']))

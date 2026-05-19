@@ -28,6 +28,8 @@
     <div class="section-label">Nuevo contenido</div>
     <form method="POST" action="{{ url_for('feed_stories.nuevo') }}" enctype="multipart/form-data">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="mes_vista" value="{{ mes }}">
+      <input type="hidden" name="anio_vista" value="{{ anio }}">
       <div class="form-grid three" style="margin-bottom:8px">
         <select class="dark-input" name="tipo" required>
           <option value="feed">Feed</option>
@@ -66,15 +68,14 @@
     </div>
   </div>
 
-  <div class="glow-card">
-    <div class="section-label">Agenda del mes (Feed + Stories)</div>
+  <div class="glow-card" style="margin-bottom:12px">
+    <div class="section-label">Feed del mes por dia</div>
     <table class="dark-table">
-      <thead><tr><th>Fecha</th><th>Tipo</th><th>Archivo</th><th>Copy</th><th>Responsable</th><th>Estado</th><th>Acciones</th></tr></thead>
+      <thead><tr><th>Fecha</th><th>Archivo</th><th>Copy</th><th>Responsable</th><th>Estado</th><th>Acciones</th></tr></thead>
       <tbody>
-        {% for c in contenidos %}
+        {% for c in feed %}
         <tr>
           <td>{{ c.fecha_publicacion }} {{ c.hora_publicacion }}</td>
-          <td><span class="badge-blue">{{ c.tipo }}</span></td>
           <td>{{ c.archivo_nombre }}</td>
           <td style="max-width:260px">{{ c.copy_texto or '—' }}</td>
           <td>{{ c.responsable_nombre or '—' }}</td>
@@ -96,7 +97,42 @@
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="7" style="text-align:center;color:var(--text3)">Sin contenidos cargados.</td></tr>
+        <tr><td colspan="6" style="text-align:center;color:var(--text3)">Sin contenidos feed cargados.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="glow-card">
+    <div class="section-label">Stories del mes por dia</div>
+    <table class="dark-table">
+      <thead><tr><th>Fecha</th><th>Archivo</th><th>Copy</th><th>Responsable</th><th>Estado</th><th>Acciones</th></tr></thead>
+      <tbody>
+        {% for c in stories %}
+        <tr>
+          <td>{{ c.fecha_publicacion }} {{ c.hora_publicacion }}</td>
+          <td>{{ c.archivo_nombre }}</td>
+          <td style="max-width:260px">{{ c.copy_texto or 'â€”' }}</td>
+          <td>{{ c.responsable_nombre or 'â€”' }}</td>
+          <td>{% if c.estado == 'publicado' %}<span class="badge-green">publicado</span>{% else %}<span class="badge-amber">pendiente</span>{% endif %}</td>
+          <td>
+            <div style="display:flex;gap:6px">
+              <a class="btn-glow btn-ghost" style="font-size:10px;padding:4px 8px" href="{{ url_for('feed_stories.descargar', id=c.id) }}">Descargar</a>
+              {% if c.estado != 'publicado' %}
+              <form method="POST" action="{{ url_for('feed_stories.marcar_publicado', id=c.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn-glow btn-success-glow" style="font-size:10px;padding:4px 8px">Publicado</button>
+              </form>
+              {% endif %}
+            </div>
+            <form method="POST" action="{{ url_for('feed_stories.guardar_observacion', id=c.id) }}" style="margin-top:6px">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input class="dark-input" name="observacion" placeholder="ObservaciÃ³n" value="{{ c.observacion or '' }}">
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align:center;color:var(--text3)">Sin contenidos stories cargados.</td></tr>
         {% endfor %}
       </tbody>
     </table>
