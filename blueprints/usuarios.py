@@ -15,9 +15,6 @@ MODULOS_DISPONIBLES = [
     {'id': 'calendario', 'nombre': 'Calendario'},
     {'id': 'influencers', 'nombre': 'Influencers'},
     {'id': 'ecommerce', 'nombre': 'Ecommerce'},
-    {'id': 'contenidos', 'nombre': 'Contenidos'},
-    {'id': 'feed_stories', 'nombre': 'Feed & Stories'},
-    {'id': 'ideas_feed_stories', 'nombre': 'Ideas Feed & Stories'},
     {'id': 'reportes', 'nombre': 'Reportes'},
     {'id': 'usuarios', 'nombre': 'Usuarios'}
 ]

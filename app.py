@@ -10,12 +10,10 @@ from blueprints.tareas import tareas_bp
 from blueprints.campanas import campanas_bp
 from blueprints.influencers import influencers_bp
 from blueprints.ecommerce import ecommerce_bp
-from blueprints.contenidos import contenidos_bp
 from blueprints.calendario import calendario_bp
 from blueprints.reportes import reportes_bp
 from blueprints.usuarios import usuarios_bp
 from blueprints.ideas_campanas import ideas_campanas_bp
-from blueprints.feed_stories import feed_stories_bp
 
 from dao.usuario_dao import UsuarioDAO
 from dao.permiso_dao import PermisoDAO
@@ -81,12 +79,10 @@ app.register_blueprint(tareas_bp, url_prefix='/tareas')
 app.register_blueprint(campanas_bp, url_prefix='/campanas')
 app.register_blueprint(influencers_bp, url_prefix='/influencers')
 app.register_blueprint(ecommerce_bp, url_prefix='/ecommerce')
-app.register_blueprint(contenidos_bp, url_prefix='/contenidos')
 app.register_blueprint(calendario_bp, url_prefix='/calendario')
 app.register_blueprint(reportes_bp, url_prefix='/reportes')
 app.register_blueprint(usuarios_bp, url_prefix='/usuarios')
 app.register_blueprint(ideas_campanas_bp, url_prefix='/ideas-campanas')
-app.register_blueprint(feed_stories_bp, url_prefix='/feed-stories')
 
 
 @app.route('/')

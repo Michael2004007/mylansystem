@@ -31,12 +31,6 @@
           </span>
         {% endfor %}
       {% endif %}
-      {% if feed_hoy or stories_hoy %}
-        <span style="color:var(--text3);flex-shrink:0">|</span>
-        <span style="color:var(--cyan);font-weight:600;flex-shrink:0">Hoy publicaciones</span>
-        <span style="color:var(--text2);font-size:11px;flex-shrink:0">Feed {{ feed_publicado }}/{{ feed_hoy|length }}</span>
-        <span style="color:var(--text2);font-size:11px;flex-shrink:0">Stories {{ stories_publicado }}/{{ stories_hoy|length }}</span>
-      {% endif %}
     </div>
     <div style="font-size:11px;color:var(--text3);flex-shrink:0" id="fecha-hoy"></div>
   </div>
