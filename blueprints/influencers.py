@@ -77,15 +77,27 @@ def colaborar(id):
     if request.method == 'POST':
         campana_id_raw = request.form.get('campana_id', '').strip()
         campana_id = int(campana_id_raw) if campana_id_raw else None
+        tipo = request.form.get('tipo')
+        if tipo not in ('normal', 'ecom', 'ecommerce'):
+            flash('Tipo de colaboración inválido.', 'error')
+            return redirect(url_for('influencers.colaborar', id=id))
+
+        try:
+            monto = float(request.form.get('monto') or 0)
+            pct_comision = float(request.form.get('pct_comision') or 0)
+            pct_descuento = float(request.form.get('pct_descuento') or 0) or None
+        except ValueError:
+            flash('Valores numéricos inválidos en la colaboración.', 'error')
+            return redirect(url_for('influencers.colaborar', id=id))
 
         colab = Colaboracion(
             id=None,
             influencer_id=id,
             campana_id=campana_id,
-            tipo=request.form['tipo'],
-            monto=float(request.form.get('monto') or 0),
-            pct_comision=float(request.form.get('pct_comision') or 0),
-            pct_descuento=float(request.form.get('pct_descuento') or 0) or None,
+            tipo=tipo,
+            monto=monto,
+            pct_comision=pct_comision,
+            pct_descuento=pct_descuento,
             detalle=request.form.get('detalle'),
             permuta_tag=request.form.get('permuta_tag'),
             fecha_entrega=request.form.get('fecha_entrega') or None,
@@ -169,7 +181,7 @@ def editar_colaboracion(id):
         flash('Colaboración actualizada.', 'success')
         return redirect(url_for('influencers.colaboraciones'))
 
-    return render_template('influencers/editar_colaboracion.html', c=colab)
+    return render_template('influencers/editar_colaboraciones.html', c=colab)
 
 
 @influencers_bp.route('/colaboracion/<int:id>/eliminar', methods=['POST'])

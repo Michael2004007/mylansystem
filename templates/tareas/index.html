@@ -12,7 +12,7 @@
   </div>
 
   <div class="filter-bar">
-    <form method="GET" style="display:flex;gap:8px;width:100%">
+    <form method="GET" id="filtro-tareas" style="display:flex;gap:8px;width:100%">
       <input class="dark-input" type="text" name="q" placeholder="Buscar tarea..."
              value="{{ request.args.get('q','') }}" style="flex:1">
 
@@ -39,6 +39,7 @@
     </form>
   </div>
 
+  <div id="tareas-listado">
   {% if tareas %}
   <div class="glow-card">
     <table class="dark-table">
@@ -118,6 +119,7 @@
     No hay tareas que coincidan con los filtros.
   </div>
   {% endif %}
+  </div>
 </div>
 
 <script>
@@ -132,6 +134,30 @@ document.addEventListener('click', function(e) {
     confirmText: btn.dataset.confirm,
     url:         btn.dataset.url
   });
+});
+
+document.addEventListener('submit', async function(e) {
+  if (!e.target || e.target.id !== 'filtro-tareas') return;
+  e.preventDefault();
+  const form = e.target;
+  const params = new URLSearchParams(new FormData(form));
+  const url = form.action ? (form.action + '?' + params.toString()) : (window.location.pathname + '?' + params.toString());
+
+  try {
+    const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+    const html = await res.text();
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const nuevo = doc.getElementById('tareas-listado');
+    const actual = document.getElementById('tareas-listado');
+    if (nuevo && actual) {
+      actual.innerHTML = nuevo.innerHTML;
+      window.history.replaceState({}, '', url);
+    } else {
+      window.location.href = url;
+    }
+  } catch (_) {
+    window.location.href = url;
+  }
 });
 </script>
 {% endblock %}

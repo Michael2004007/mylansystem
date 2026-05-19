@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}{% if idea %}Editar idea{% else %}Nueva idea{% endif %}{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="topbar">
+    <div>
+      <div class="page-title">{% if idea %}Editar idea{% else %}Nueva idea{% endif %}</div>
+      <div class="page-subtitle">Definí la propuesta inicial de campaña</div>
+    </div>
+    <a href="{{ url_for('ideas_campanas.index') }}" class="btn-glow btn-ghost">← Volver</a>
+  </div>
+
+  <div class="glow-card" style="max-width:640px">
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div style="margin-bottom:12px">
+        <label class="form-label">Nombre de campaña</label>
+        <input class="dark-input" name="nombre" required value="{{ idea.nombre if idea else '' }}">
+      </div>
+      <div style="margin-bottom:16px">
+        <label class="form-label">Idea / enfoque de la campaña</label>
+        <textarea class="dark-input" name="descripcion" rows="4">{{ idea.descripcion if idea else '' }}</textarea>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button type="submit" class="btn-glow btn-primary-glow">{% if idea %}Guardar cambios{% else %}Crear idea{% endif %}</button>
+        <a href="{{ url_for('ideas_campanas.index') }}" class="btn-glow btn-ghost">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

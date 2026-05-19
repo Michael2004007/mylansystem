@@ -9,6 +9,7 @@ from dao.configuracion_dao import ConfiguracionDAO
 from dao.tarea_dao import TareaDAO
 from dao.campana_dao import CampanaDAO
 from dao.influencer_dao import InfluencerDAO
+from dao.feed_story_dao import FeedStoryDAO
 from decorators import requiere_permiso
 
 inicio_bp = Blueprint('inicio', __name__)
@@ -58,6 +59,23 @@ def index():
         tareas_semana_por_usuario[usuario].append(t)
     tareas_semana_por_usuario = dict(sorted(tareas_semana_por_usuario.items()))
 
+    tareas_atrasadas = [
+        t for t in pendientes
+        if t.fecha_entrega and str(t.fecha_entrega) < str(hoy)
+    ]
+    tareas_atrasadas.sort(key=lambda t: str(t.fecha_entrega))
+    tareas_atrasadas_por_usuario = defaultdict(list)
+    for t in tareas_atrasadas:
+        usuario = t.usuario_nombre or 'Sin asignar'
+        tareas_atrasadas_por_usuario[usuario].append(t)
+    tareas_atrasadas_por_usuario = dict(sorted(tareas_atrasadas_por_usuario.items()))
+
+    contenidos_hoy = FeedStoryDAO.listar_hoy()
+    feed_hoy = [c for c in contenidos_hoy if c.get('tipo') == 'feed']
+    stories_hoy = [c for c in contenidos_hoy if c.get('tipo') == 'stories']
+    feed_publicado = len([c for c in feed_hoy if c.get('estado') == 'publicado'])
+    stories_publicado = len([c for c in stories_hoy if c.get('estado') == 'publicado'])
+
     return render_template(
         'inicio/index.html',
         logo=logo,
@@ -66,7 +84,14 @@ def index():
         pendientes=pendientes,
         influencers_count=influencers_count,
         tareas_semana=tareas_semana,
-        tareas_semana_por_usuario=tareas_semana_por_usuario
+        tareas_semana_por_usuario=tareas_semana_por_usuario,
+        tareas_semana_por_persona=tareas_semana_por_usuario,
+        tareas_atrasadas=tareas_atrasadas,
+        tareas_atrasadas_por_usuario=tareas_atrasadas_por_usuario,
+        feed_hoy=feed_hoy,
+        stories_hoy=stories_hoy,
+        feed_publicado=feed_publicado,
+        stories_publicado=stories_publicado
     )
 
 

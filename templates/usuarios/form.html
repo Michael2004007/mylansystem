@@ -64,6 +64,7 @@
                   <th style="text-align:left;padding:8px;color:var(--text3);font-weight:600;font-size:10px;text-transform:uppercase">Módulo</th>
                   <th style="text-align:center;padding:8px;color:var(--text3);font-weight:600;font-size:10px;text-transform:uppercase">Acceso</th>
                   <th style="text-align:center;padding:8px;color:var(--text3);font-weight:600;font-size:10px;text-transform:uppercase">Puede editar</th>
+                  <th style="text-align:center;padding:8px;color:var(--text3);font-weight:600;font-size:10px;text-transform:uppercase">Puede aprobar</th>
                 </tr>
               </thead>
               <tbody>
@@ -79,6 +80,11 @@
                   <td style="text-align:center;padding:8px">
                     <input type="checkbox" name="puede_editar" value="{{ modulo.id }}"
                            {{ 'checked' if permiso and permiso.puede_editar else '' }}
+                           style="width:18px;height:18px;cursor:pointer">
+                  </td>
+                  <td style="text-align:center;padding:8px">
+                    <input type="checkbox" name="puede_aprobar" value="{{ modulo.id }}"
+                           {{ 'checked' if permiso and permiso.puede_aprobar else '' }}
                            style="width:18px;height:18px;cursor:pointer">
                   </td>
                 </tr>

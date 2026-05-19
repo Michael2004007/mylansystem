@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}Feed & Stories{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Feed & Stories</div>
+      <div class="page-subtitle">Plan diario para descargar y publicar</div>
+    </div>
+  </div>
+
+  <div class="glow-card" style="margin-bottom:12px">
+    <form method="GET" style="display:flex;gap:8px;flex-wrap:wrap">
+      <select class="dark-input" name="mes" onchange="this.form.submit()" style="width:auto">
+        {% for m in range(1,13) %}
+        <option value="{{ m }}" {% if m==mes %}selected{% endif %}>Mes {{ m }}</option>
+        {% endfor %}
+      </select>
+      <select class="dark-input" name="anio" onchange="this.form.submit()" style="width:auto">
+        {% for y in [2025,2026,2027,2028] %}
+        <option value="{{ y }}" {% if y==anio %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+    </form>
+  </div>
+
+  <div class="glow-card" style="margin-bottom:12px">
+    <div class="section-label">Nuevo contenido</div>
+    <form method="POST" action="{{ url_for('feed_stories.nuevo') }}" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-grid three" style="margin-bottom:8px">
+        <select class="dark-input" name="tipo" required>
+          <option value="feed">Feed</option>
+          <option value="stories">Stories</option>
+        </select>
+        <input class="dark-input" type="date" name="fecha_publicacion" required>
+        <input class="dark-input" type="time" name="hora_publicacion" required>
+      </div>
+      <div class="form-grid" style="margin-bottom:8px">
+        <select class="dark-input" name="responsable_id">
+          <option value="">Sin responsable</option>
+          {% for u in usuarios %}<option value="{{ u.id }}">{{ u.nombre }}</option>{% endfor %}
+        </select>
+        <input class="dark-input" type="file" name="archivo" required>
+      </div>
+      <div style="margin-bottom:8px"><textarea class="dark-input" name="copy_texto" rows="2" placeholder="Texto/copy para publicar"></textarea></div>
+      <div style="margin-bottom:8px"><textarea class="dark-input" name="observacion" rows="2" placeholder="Observación para mejorar próxima pieza"></textarea></div>
+      <button class="btn-glow btn-primary-glow" type="submit">Cargar contenido</button>
+    </form>
+  </div>
+
+  <div class="glow-card" style="margin-bottom:12px">
+    <div class="section-label">Previsualización feed (grilla)</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+      {% for c in contenidos if c.tipo == 'feed' %}
+      <div style="border:1px solid {% if c.fecha_publicacion == hoy and c.estado == 'publicado' %}rgba(16,185,129,.8){% else %}var(--dk-border){% endif %};border-radius:8px;padding:8px">
+        <div style="font-size:10px;color:var(--text3)">{{ c.fecha_publicacion }} {{ c.hora_publicacion }}</div>
+        <div style="font-size:11px;color:var(--text1);font-weight:600">{{ c.archivo_nombre }}</div>
+        <div style="font-size:10px;color:{% if c.estado == 'publicado' %}var(--green){% else %}var(--amber){% endif %}">
+          {{ c.estado }}
+        </div>
+      </div>
+      {% else %}
+      <div style="font-size:11px;color:var(--text3)">Sin piezas feed.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="glow-card">
+    <div class="section-label">Agenda del mes (Feed + Stories)</div>
+    <table class="dark-table">
+      <thead><tr><th>Fecha</th><th>Tipo</th><th>Archivo</th><th>Copy</th><th>Responsable</th><th>Estado</th><th>Acciones</th></tr></thead>
+      <tbody>
+        {% for c in contenidos %}
+        <tr>
+          <td>{{ c.fecha_publicacion }} {{ c.hora_publicacion }}</td>
+          <td><span class="badge-blue">{{ c.tipo }}</span></td>
+          <td>{{ c.archivo_nombre }}</td>
+          <td style="max-width:260px">{{ c.copy_texto or '—' }}</td>
+          <td>{{ c.responsable_nombre or '—' }}</td>
+          <td>{% if c.estado == 'publicado' %}<span class="badge-green">publicado</span>{% else %}<span class="badge-amber">pendiente</span>{% endif %}</td>
+          <td>
+            <div style="display:flex;gap:6px">
+              <a class="btn-glow btn-ghost" style="font-size:10px;padding:4px 8px" href="{{ url_for('feed_stories.descargar', id=c.id) }}">Descargar</a>
+              {% if c.estado != 'publicado' %}
+              <form method="POST" action="{{ url_for('feed_stories.marcar_publicado', id=c.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn-glow btn-success-glow" style="font-size:10px;padding:4px 8px">Publicado</button>
+              </form>
+              {% endif %}
+            </div>
+            <form method="POST" action="{{ url_for('feed_stories.guardar_observacion', id=c.id) }}" style="margin-top:6px">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input class="dark-input" name="observacion" placeholder="Observación" value="{{ c.observacion or '' }}">
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" style="text-align:center;color:var(--text3)">Sin contenidos cargados.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

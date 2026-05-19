@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% block title %}Contenidos{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Contenidos</div>
+      <div class="page-subtitle">Carpetas, videos e imágenes para el equipo</div>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <form method="GET" style="display:flex;gap:8px;width:100%">
+      <select class="dark-input" name="tipo" onchange="this.form.submit()">
+        <option value="tiendas" {% if tipo == 'tiendas' %}selected{% endif %}>Videos de tiendas</option>
+        <option value="feed" {% if tipo == 'feed' %}selected{% endif %}>Feed</option>
+        <option value="stories" {% if tipo == 'stories' %}selected{% endif %}>Stories</option>
+      </select>
+      {% if carpeta_actual %}
+      <input type="hidden" name="carpeta_id" value="{{ carpeta_actual.id }}">
+      {% endif %}
+    </form>
+  </div>
+
+  <div class="glow-card" style="margin-bottom:14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+      <div style="font-size:11px;color:var(--text2)">
+        {% if carpeta_actual %}
+          Carpeta actual: <strong style="color:var(--text1)">{{ carpeta_actual.nombre }}</strong>
+        {% else %}
+          Seleccioná una carpeta principal o creá una nueva.
+        {% endif %}
+      </div>
+      <form method="POST" action="{{ url_for('contenidos.nueva_carpeta') }}" style="display:flex;gap:8px">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="tipo" value="{{ tipo }}">
+        <input type="hidden" name="parent_id" value="{{ carpeta_actual.id if carpeta_actual else '' }}">
+        <input class="dark-input" name="nombre" placeholder="Nueva carpeta" required style="min-width:220px">
+        <button type="submit" class="btn-glow btn-primary-glow">Crear carpeta</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="glow-card" style="margin-bottom:14px">
+    <div class="section-label">Carpetas principales</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      {% for c in carpetas %}
+      <a href="{{ url_for('contenidos.index', tipo=tipo, carpeta_id=c.id) }}" class="btn-glow btn-ghost">{{ c.nombre }}</a>
+      {% else %}
+      <span style="font-size:11px;color:var(--text3)">Aún no hay carpetas principales.</span>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% if carpeta_actual %}
+  <div class="glow-card" style="margin-bottom:14px">
+    <div class="section-label">Subcarpetas</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      {% for s in subcarpetas %}
+      <a href="{{ url_for('contenidos.index', tipo=tipo, carpeta_id=s.id) }}" class="btn-glow btn-ghost">{{ s.nombre }}</a>
+      {% else %}
+      <span style="font-size:11px;color:var(--text3)">No hay subcarpetas.</span>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="glow-card" style="margin-bottom:14px">
+    <form method="POST" action="{{ url_for('contenidos.subir', carpeta_id=carpeta_actual.id) }}" enctype="multipart/form-data" style="display:flex;gap:8px;align-items:end;flex-wrap:wrap">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div style="min-width:280px;flex:1">
+        <label class="form-label">Subir imagen o video</label>
+        <input class="dark-input" type="file" name="archivo" required>
+      </div>
+      <button type="submit" class="btn-glow btn-primary-glow">Subir</button>
+    </form>
+  </div>
+
+  <div class="glow-card">
+    <div class="section-label">Galería</div>
+    <table class="dark-table">
+      <thead>
+        <tr>
+          <th>Archivo</th>
+          <th>Tipo</th>
+          <th>Tamaño</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in archivos %}
+        <tr>
+          <td style="color:var(--text1)">{{ a.nombre }}</td>
+          <td>{{ a.tipo }}</td>
+          <td>{{ a.tamano_kb }} KB</td>
+          <td>
+            <div style="display:flex;gap:6px">
+              <a href="{{ url_for('contenidos.descargar', id=a.id) }}" class="btn-glow btn-ghost" style="font-size:10px;padding:4px 8px">Descargar</a>
+              <form method="POST" action="{{ url_for('contenidos.eliminar', id=a.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-glow btn-danger-glow" style="font-size:10px;padding:4px 8px">Eliminar</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="4" style="text-align:center;color:var(--text3);padding:22px">No hay archivos en esta carpeta.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

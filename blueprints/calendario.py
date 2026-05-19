@@ -32,9 +32,9 @@ def mes(mes):
 @calendario_bp.route('/nuevo', methods=['POST'])
 @login_required
 def nuevo():
-    fecha     = request.form['fecha']
-    nombre    = request.form['nombre']
-    tipo      = request.form['tipo']
+    fecha     = request.form.get('fecha')
+    nombre    = (request.form.get('nombre') or '').strip()
+    tipo      = request.form.get('tipo')
     accion    = request.form.get('accion_sugerida')
     campana   = request.form.get('campana_id') or None
     destacado = 1 if request.form.get('destacado') else 0
@@ -59,9 +59,9 @@ def nuevo():
 @calendario_bp.route('/editar/<int:id>', methods=['POST'])
 @login_required
 def editar(id):
-    fecha   = request.form['fecha']
-    nombre  = request.form['nombre']
-    tipo    = request.form['tipo']
+    fecha   = request.form.get('fecha')
+    nombre  = (request.form.get('nombre') or '').strip()
+    tipo    = request.form.get('tipo')
     accion  = request.form.get('accion_sugerida')
     campana = request.form.get('campana_id') or None
 
@@ -85,3 +85,10 @@ def eliminar(id):
     CalendarioDAO.eliminar(id)
     flash('Evento eliminado.', 'error')
     return redirect(request.referrer or url_for('calendario.index'))
+    if not fecha or not nombre or not tipo:
+        flash('Completá nombre, fecha y tipo del evento.', 'error')
+        return redirect(request.referrer or url_for('calendario.index'))
+
+    if not fecha or not nombre or not tipo:
+        flash('Completá nombre, fecha y tipo del evento.', 'error')
+        return redirect(request.referrer or url_for('calendario.index'))

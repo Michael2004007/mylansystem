@@ -189,9 +189,27 @@
       <span class="ico">◎</span> Campañas
     </a>
     {% endif %}
+    <a class="sb-item {% if request.blueprint == 'ideas_campanas' %}active{% endif %}" href="{{ url_for('ideas_campanas.index') }}">
+      <span class="ico">◌</span> Ideas Campaña
+    </a>
     {% if tiene_permiso('calendario') %}
     <a class="sb-item {% if request.blueprint == 'calendario' %}active{% endif %}" href="{{ url_for('calendario.index') }}">
       <span class="ico">▦</span> Calendario
+    </a>
+    {% endif %}
+    {% if tiene_permiso('contenidos') %}
+    <a class="sb-item {% if request.blueprint == 'contenidos' %}active{% endif %}" href="{{ url_for('contenidos.index') }}">
+      <span class="ico">▣</span> Contenidos
+    </a>
+    {% endif %}
+    {% if tiene_permiso('feed_stories') %}
+    <a class="sb-item {% if request.blueprint == 'feed_stories' and not request.path.startswith('/feed-stories/ideas') %}active{% endif %}" href="{{ url_for('feed_stories.index') }}">
+      <span class="ico">▤</span> Feed & Stories
+    </a>
+    {% endif %}
+    {% if tiene_permiso('ideas_feed_stories') %}
+    <a class="sb-item {% if request.blueprint == 'feed_stories' and request.path.startswith('/feed-stories/ideas') %}active{% endif %}" href="{{ url_for('feed_stories.ideas') }}">
+      <span class="ico">◍</span> Ideas Feed/Stories
     </a>
     {% endif %}
 

@@ -36,6 +36,11 @@ def index():
 def nueva():
     if request.method == 'POST':
         usuario_id = request.form.get('usuario_id')
+        titulo = (request.form.get('titulo') or '').strip()
+        fecha_entrega = request.form.get('fecha_entrega') or None
+        if not titulo or not fecha_entrega:
+            flash('TÃ­tulo y fecha de entrega son obligatorios.', 'error')
+            return redirect(url_for('tareas.nueva'))
 
         # Si no es admin, forzar que la tarea sea para él mismo
         if not current_user.es_admin():
@@ -43,11 +48,11 @@ def nueva():
 
         tarea = Tarea(
             id=None,
-            titulo=request.form['titulo'],
+            titulo=titulo,
             descripcion=request.form.get('descripcion'),
             estado=request.form.get('estado', 'pendiente'),
             prioridad=request.form.get('prioridad', 'media'),
-            fecha_entrega=request.form.get('fecha_entrega') or None,
+            fecha_entrega=fecha_entrega,
             campana_id=int(request.form['campana_id']) if request.form.get('campana_id') else None,
             usuario_id=int(usuario_id) if usuario_id else None
         )
@@ -77,16 +82,21 @@ def editar(id):
 
     if request.method == 'POST':
         usuario_id = request.form.get('usuario_id')
+        titulo = (request.form.get('titulo') or '').strip()
+        fecha_entrega = request.form.get('fecha_entrega') or None
+        if not titulo or not fecha_entrega:
+            flash('TÃ­tulo y fecha de entrega son obligatorios.', 'error')
+            return redirect(url_for('tareas.editar', id=id))
 
         # Si no es admin, mantener el usuario actual
         if not current_user.es_admin():
             usuario_id = tarea.usuario_id
 
-        tarea.titulo = request.form['titulo']
+        tarea.titulo = titulo
         tarea.descripcion = request.form.get('descripcion')
         tarea.estado = request.form.get('estado', 'pendiente')
         tarea.prioridad = request.form.get('prioridad', 'media')
-        tarea.fecha_entrega = request.form.get('fecha_entrega') or None
+        tarea.fecha_entrega = fecha_entrega
         tarea.campana_id = int(request.form['campana_id']) if request.form.get('campana_id') else None
         tarea.usuario_id = int(usuario_id) if usuario_id else None
 

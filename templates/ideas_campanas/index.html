@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Ideas de Campañas{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Ideas de Campañas</div>
+      <div class="page-subtitle">Preproducción y planificación antes de activar</div>
+    </div>
+    <a href="{{ url_for('ideas_campanas.nueva') }}" class="btn-glow btn-primary-glow">+ Nueva idea</a>
+  </div>
+
+  {% if ideas %}
+    {% for i in ideas %}
+    <div class="glow-card" style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
+        <div>
+          <a href="{{ url_for('ideas_campanas.detalle', id=i.id) }}" style="font-size:14px;font-weight:600;color:var(--text1);text-decoration:none">{{ i.nombre }}</a>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px">{{ i.descripcion or 'Sin descripción' }}</div>
+          <div style="margin-top:6px">
+            {% if i.estado == 'activada' %}
+            <span class="badge-green">Activada</span>
+            {% else %}
+            <span class="badge-amber">Borrador</span>
+            {% endif %}
+          </div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <a href="{{ url_for('ideas_campanas.editar', id=i.id) }}" class="btn-glow btn-ghost" style="font-size:10px;padding:4px 10px">Editar</a>
+          <a href="{{ url_for('ideas_campanas.eliminar', id=i.id) }}" class="btn-glow btn-danger-glow" style="font-size:10px;padding:4px 10px">Eliminar</a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+  <div class="glow-card" style="text-align:center;color:var(--text3);padding:32px">No hay ideas cargadas todavía.</div>
+  {% endif %}
+</div>
+{% endblock %}

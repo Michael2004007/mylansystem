@@ -4,7 +4,7 @@ from flask_login import current_user
 from dao.permiso_dao import PermisoDAO
 
 
-def requiere_permiso(modulo, requiere_editar=False):
+def requiere_permiso(modulo, requiere_editar=False, requiere_aprobar=False):
     """
     Decorator para verificar permisos de usuario en un módulo.
 
@@ -28,7 +28,8 @@ def requiere_permiso(modulo, requiere_editar=False):
             tiene_acceso = PermisoDAO.tiene_permiso(
                 current_user.id,
                 modulo,
-                requiere_editar=requiere_editar
+                requiere_editar=requiere_editar,
+                requiere_aprobar=requiere_aprobar
             )
 
             if not tiene_acceso:

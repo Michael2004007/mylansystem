@@ -36,12 +36,21 @@ def index():
 def registrar_venta():
     raw_id = request.form.get('influencer_id')
     fecha  = request.form.get('fecha')
+    monto_raw = request.form.get('monto')
+    if not monto_raw:
+        flash('Ingresá el monto de la venta.', 'error')
+        return redirect(url_for('ecommerce.index'))
+    try:
+        monto = float(monto_raw)
+    except ValueError:
+        flash('Monto inválido.', 'error')
+        return redirect(url_for('ecommerce.index'))
     fecha_dt = datetime.datetime.strptime(fecha, '%Y-%m-%d').date() if fecha else datetime.date.today()
     EcommerceDAO.insertar_venta(
         influencer_id = int(raw_id) if raw_id else None,
         mes           = fecha_dt.month,
         anio          = fecha_dt.year,
-        monto         = float(request.form['monto']),
+        monto         = monto,
         nota          = request.form.get('nota'),
         fecha         = fecha_dt
     )
@@ -55,12 +64,17 @@ def editar_venta(venta_id):
     raw_id = request.form.get('influencer_id')
     fecha  = request.form.get('fecha')
     fecha_dt = datetime.datetime.strptime(fecha, '%Y-%m-%d').date() if fecha else datetime.date.today()
+    try:
+        monto = float(request.form.get('monto') or 0)
+    except ValueError:
+        flash('Monto inválido.', 'error')
+        return redirect(url_for('ecommerce.index'))
     EcommerceDAO.actualizar_venta(
         venta_id      = venta_id,
         influencer_id = int(raw_id) if raw_id else None,
         mes           = fecha_dt.month,
         anio          = fecha_dt.year,
-        monto         = float(request.form['monto']),
+        monto         = monto,
         nota          = request.form.get('nota'),
         fecha         = fecha_dt
     )
@@ -82,11 +96,19 @@ def metas():
     hoy  = datetime.date.today()
     anio = request.args.get('anio', type=int, default=hoy.year)
     if request.method == 'POST':
+        try:
+            mes = int(request.form.get('mes') or 0)
+            anio_form = int(request.form.get('anio') or 0)
+            meta = float(request.form.get('meta') or 0)
+            real = float(request.form.get('real') or 0)
+        except ValueError:
+            flash('Datos de meta inválidos.', 'error')
+            return redirect(url_for('ecommerce.index'))
         EcommerceDAO.actualizar_meta(
-            mes  = int(request.form['mes']),
-            anio = int(request.form['anio']),
-            meta = float(request.form['meta']),
-            real = float(request.form.get('real', 0))
+            mes=mes,
+            anio=anio_form,
+            meta=meta,
+            real=real
         )
         flash('Meta actualizada.', 'success')
         return redirect(url_for('ecommerce.index'))

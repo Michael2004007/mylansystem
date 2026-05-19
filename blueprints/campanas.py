@@ -12,6 +12,7 @@ from entidades.campana import Campana
 from entidades.colaboracion import Colaboracion
 from entidades.influencer import Influencer
 from entidades.hito import Hito
+from decorators import requiere_permiso
 
 campanas_bp = Blueprint('campanas', __name__)
 
@@ -100,6 +101,7 @@ def editar(id):
 
 @campanas_bp.route('/completar/<int:id>')
 @login_required
+@requiere_permiso('campanas', requiere_aprobar=True)
 def completar(id):
     CampanaDAO.completar(id)
     flash('Campaña marcada como completada.', 'success')
@@ -118,6 +120,9 @@ def eliminar(id):
 @login_required
 def agregar_colaboracion(campana_id):
     influencer_id = request.form.get('influencer_id')
+    if not influencer_id:
+        flash('Seleccioná un influencer.', 'error')
+        return redirect(url_for('campanas.detalle', id=campana_id))
 
     if influencer_id == '__nuevo__':
         nuevo_nombre = request.form.get('nuevo_nombre', '').strip()
@@ -135,9 +140,13 @@ def agregar_colaboracion(campana_id):
         )
         influencer_id = InfluencerDAO.insertar(inf)
 
-    tipo_pago   = request.form.get('tipo_pago', 'efectivo')
+    tipo_pago = request.form.get('tipo_pago', 'efectivo')
     permuta_tag = request.form.get('permuta_tag', '').strip() if tipo_pago == 'permuta' else None
-    monto       = 0.0 if tipo_pago == 'permuta' else float(request.form.get('monto') or 0)
+    try:
+        monto = 0.0 if tipo_pago == 'permuta' else float(request.form.get('monto') or 0)
+    except ValueError:
+        flash('Monto inválido.', 'error')
+        return redirect(url_for('campanas.detalle', id=campana_id))
 
     colab = Colaboracion(
         id=None,
@@ -164,11 +173,18 @@ def agregar_colaboracion(campana_id):
 @login_required
 def editar_colaboracion(colab_id):
     colab          = ColaboracionDAO.obtener(colab_id)
+    if not colab:
+        flash('Colaboración no encontrada.', 'error')
+        return redirect(url_for('campanas.index'))
     monto_anterior = colab.monto or 0
 
     tipo_pago        = request.form.get('tipo_pago', 'efectivo')
     colab.tipo       = 'normal'
-    colab.monto      = 0.0 if tipo_pago == 'permuta' else float(request.form.get('monto') or 0)
+    try:
+        colab.monto = 0.0 if tipo_pago == 'permuta' else float(request.form.get('monto') or 0)
+    except ValueError:
+        flash('Monto inválido.', 'error')
+        return redirect(url_for('campanas.detalle', id=colab.campana_id))
     colab.permuta_tag = request.form.get('permuta_tag', '').strip() if tipo_pago == 'permuta' else None
     colab.detalle    = request.form.get('detalle')
     colab.fecha_entrega = request.form.get('fecha_entrega') or None
@@ -200,13 +216,19 @@ def eliminar_colaboracion(colab_id):
 @campanas_bp.route('/<int:campana_id>/hito/nuevo', methods=['POST'])
 @login_required
 def agregar_hito(campana_id):
+    titulo = (request.form.get('titulo') or '').strip()
+    fecha_hora = request.form.get('fecha_hora')
+    if not titulo or not fecha_hora:
+        flash('Completá título y fecha del hito.', 'error')
+        return redirect(url_for('campanas.detalle', id=campana_id))
+
     hito = Hito(
         id=None,
         campana_id=campana_id,
-        titulo=request.form['titulo'],
+        titulo=titulo,
         descripcion=request.form.get('descripcion'),
         lugar=request.form.get('lugar'),
-        fecha_hora=request.form['fecha_hora'],
+        fecha_hora=fecha_hora,
         estado='pendiente'
     )
     HitoDAO.insertar(hito)

@@ -1,0 +1,2 @@
+ALTER TABLE permisos_usuario
+ADD COLUMN IF NOT EXISTS puede_aprobar TINYINT(1) NOT NULL DEFAULT 0;

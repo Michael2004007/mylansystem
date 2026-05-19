@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% block title %}{{ idea.nombre }}{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="topbar">
+    <div>
+      <div class="page-title">{{ idea.nombre }}</div>
+      <div class="page-subtitle">{{ idea.descripcion or 'Sin descripción' }}</div>
+    </div>
+    <a href="{{ url_for('ideas_campanas.index') }}" class="btn-glow btn-ghost">← Volver</a>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+    <div class="glow-card">
+      <div class="section-label">Influencers candidatos</div>
+      <form method="POST" action="{{ url_for('ideas_campanas.agregar_colaboracion', id=idea.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <select class="dark-input" name="influencer_id" required>
+            <option value="">Seleccionar influencer</option>
+            {% for inf in influencers %}
+            <option value="{{ inf.id }}">{{ inf.nombre }}</option>
+            {% endfor %}
+          </select>
+          <input class="dark-input" type="number" step="0.01" min="0" name="monto" placeholder="Monto">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <input class="dark-input" type="date" name="fecha_entrega">
+          <button class="btn-glow btn-primary-glow" type="submit">Agregar</button>
+        </div>
+        <textarea class="dark-input" rows="2" name="detalle" placeholder="Detalle de contenido"></textarea>
+      </form>
+      <div style="margin-top:10px">
+        {% for c in colaboradores %}
+        <div style="padding:8px 0;border-bottom:1px solid var(--dk-border);font-size:11px">
+          <strong style="color:var(--text1)">{{ c.influencer_nombre }}</strong>
+          <span style="color:var(--text3)"> · ${{ '{:,.0f}'.format(c.monto or 0) }}</span>
+          <div style="color:var(--text2)">{{ c.detalle or 'Sin detalle' }}</div>
+        </div>
+        {% else %}
+        <div style="font-size:11px;color:var(--text3)">Sin candidatos aún.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="glow-card">
+      <div class="section-label">Ideas de hitos / progreso</div>
+      <form method="POST" action="{{ url_for('ideas_campanas.agregar_hito', id=idea.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <input class="dark-input" name="titulo" required placeholder="Título hito">
+          <input class="dark-input" name="lugar" placeholder="Lugar">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <input class="dark-input" type="datetime-local" name="fecha_hora" required>
+          <button class="btn-glow btn-primary-glow" type="submit">Agregar</button>
+        </div>
+        <textarea class="dark-input" rows="2" name="descripcion" placeholder="Descripción"></textarea>
+      </form>
+      <div style="margin-top:10px">
+        {% for h in hitos %}
+        <div style="padding:8px 0;border-bottom:1px solid var(--dk-border);font-size:11px">
+          <strong style="color:var(--text1)">{{ h.titulo }}</strong>
+          <div style="color:var(--text2)">{{ h.fecha_hora }}{% if h.lugar %} · {{ h.lugar }}{% endif %}</div>
+        </div>
+        {% else %}
+        <div style="font-size:11px;color:var(--text3)">Sin hitos aún.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="glow-card">
+    <div class="section-label">Activar campaña (aprobar selección)</div>
+    <form method="POST" action="{{ url_for('ideas_campanas.activar', id=idea.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+        <input class="dark-input" type="date" name="fecha_inicio" required>
+        <input class="dark-input" type="date" name="fecha_fin">
+        <input class="dark-input" type="number" step="0.01" min="0" name="presupuesto" placeholder="Presupuesto" required>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Aprobar influencers:</div>
+          {% for c in colaboradores %}
+          <label style="display:flex;gap:6px;align-items:center;font-size:11px;margin-bottom:4px;color:var(--text1)">
+            <input type="checkbox" name="colab_ids" value="{{ c.id }}" checked>
+            {{ c.influencer_nombre }} {% if c.monto %}(${{
+            '{:,.0f}'.format(c.monto) }}){% endif %}
+          </label>
+          {% else %}
+          <span style="font-size:11px;color:var(--text3)">No hay candidatos.</span>
+          {% endfor %}
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Aprobar hitos:</div>
+          {% for h in hitos %}
+          <label style="display:flex;gap:6px;align-items:center;font-size:11px;margin-bottom:4px;color:var(--text1)">
+            <input type="checkbox" name="hito_ids" value="{{ h.id }}" checked>
+            {{ h.titulo }}
+          </label>
+          {% else %}
+          <span style="font-size:11px;color:var(--text3)">No hay hitos.</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <button type="submit" class="btn-glow btn-success-glow">Activar campaña</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
