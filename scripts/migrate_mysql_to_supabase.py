@@ -27,11 +27,38 @@ TABLES_ORDER = [
 ]
 
 
-def norm(v):
+BOOL_COLUMNS = {
+    ("usuarios", "activo"),
+    ("permisos_usuario", "puede_ver"),
+    ("permisos_usuario", "puede_editar"),
+    ("permisos_usuario", "puede_aprobar"),
+    ("cal_eventos", "destacado"),
+}
+
+JSON_COLUMNS = {
+    ("tareas", "postergaciones"),
+    ("hitos_campana", "historial_postergaciones"),
+    ("documentos", "datos"),
+}
+
+
+def norm(table, col, v):
     if isinstance(v, Decimal):
         return float(v)
     if isinstance(v, (datetime, date)):
         return v
+    if (table, col) in BOOL_COLUMNS and v is not None:
+        if isinstance(v, bool):
+            return v
+        return int(v) == 1
+    if (table, col) in JSON_COLUMNS:
+        if v is None or v == "":
+            if (table, col) == ("documentos", "datos"):
+                return "{}"
+            return "[]"
+        if isinstance(v, (dict, list)):
+            return json.dumps(v, ensure_ascii=False)
+        return str(v)
     if isinstance(v, dict):
         return json.dumps(v, ensure_ascii=False)
     return v
@@ -62,6 +89,20 @@ def fetch_all(mysql_conn, table):
     return rows
 
 
+def get_pg_columns(pg_conn, table):
+    with pg_conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_schema='public' AND table_name=%s
+            ORDER BY ordinal_position
+            """,
+            (table,),
+        )
+        return [r[0] for r in cur.fetchall()]
+
+
 def reset_table(pg_conn, table):
     with pg_conn.cursor() as cur:
         cur.execute(f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE")
@@ -70,10 +111,13 @@ def reset_table(pg_conn, table):
 def insert_rows(pg_conn, table, rows):
     if not rows:
         return 0
-    cols = list(rows[0].keys())
+    dest_cols = set(get_pg_columns(pg_conn, table))
+    cols = [c for c in rows[0].keys() if c in dest_cols]
+    if not cols:
+        return 0
     values = []
     for r in rows:
-        values.append(tuple(norm(r[c]) for c in cols))
+        values.append(tuple(norm(table, c, r[c]) for c in cols))
     sql = f"INSERT INTO {table} ({', '.join(cols)}) VALUES %s"
     with pg_conn.cursor() as cur:
         execute_values(cur, sql, values, page_size=1000)
