@@ -105,10 +105,8 @@ class _PostgresConnectionWrapper:
     def cursor(self, dictionary=False):
         import psycopg2.extras
         if dictionary:
-            return _PostgresCursorWrapper(
-                self._conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            )
-        return _PostgresCursorWrapper(self._conn.cursor())
+            return self._conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        return self._conn.cursor()
 
     def commit(self):
         return self._conn.commit()
@@ -118,39 +116,3 @@ class _PostgresConnectionWrapper:
 
     def close(self):
         return self._conn.close()
-
-
-class _PostgresCursorWrapper:
-    def __init__(self, cursor):
-        self._cursor = cursor
-        self.lastrowid = None
-
-    def execute(self, query, params=None):
-        self.lastrowid = None
-        q = (query or "").strip()
-        up = q.upper()
-        is_insert = up.startswith("INSERT INTO")
-        has_returning = "RETURNING" in up
-
-        if is_insert and not has_returning:
-            patched = q.rstrip(";") + " RETURNING id"
-            self._cursor.execute(patched, params)
-            row = self._cursor.fetchone()
-            if row is not None:
-                if isinstance(row, dict):
-                    self.lastrowid = row.get("id")
-                else:
-                    self.lastrowid = row[0]
-            return
-
-        self._cursor.execute(query, params)
-        if is_insert and has_returning:
-            row = self._cursor.fetchone()
-            if row is not None:
-                if isinstance(row, dict):
-                    self.lastrowid = row.get("id")
-                else:
-                    self.lastrowid = row[0]
-
-    def __getattr__(self, item):
-        return getattr(self._cursor, item)
