@@ -24,10 +24,16 @@ class ConfiguracionDAO:
         try:
             conn   = Conexion.obtener_conexion()
             cursor = conn.cursor()
-            cursor.execute("""INSERT INTO configuracion (clave, valor)
-                              VALUES (%s, %s)
-                              ON DUPLICATE KEY UPDATE valor = %s""",
-                           (clave, valor, valor))
+            if Conexion.es_postgres():
+                cursor.execute("""INSERT INTO configuracion (clave, valor)
+                                  VALUES (%s, %s)
+                                  ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor""",
+                               (clave, valor))
+            else:
+                cursor.execute("""INSERT INTO configuracion (clave, valor)
+                                  VALUES (%s, %s)
+                                  ON DUPLICATE KEY UPDATE valor = %s""",
+                               (clave, valor, valor))
             conn.commit()
             return cursor.rowcount
         except Exception as e:
