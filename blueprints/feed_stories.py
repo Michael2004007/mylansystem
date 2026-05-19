@@ -1,4 +1,5 @@
 import os
+import subprocess
 from uuid import uuid4
 from datetime import date, datetime
 import mimetypes
@@ -18,6 +19,32 @@ ALLOWED = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'mp4', 'mov', 'avi'}
 
 def _allowed(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED
+
+
+def _build_preview_path(ruta_original):
+    base, _ext = os.path.splitext(ruta_original)
+    return f"{base}__preview.mp4"
+
+
+def _crear_preview_video(ruta_original):
+    """Crea mp4 web-compatible para previsualizacion. Mantiene original para descarga."""
+    preview = _build_preview_path(ruta_original)
+    cmd = [
+        "ffmpeg", "-y",
+        "-i", ruta_original,
+        "-vcodec", "libx264",
+        "-acodec", "aac",
+        "-movflags", "+faststart",
+        "-pix_fmt", "yuv420p",
+        preview
+    ]
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        if proc.returncode == 0 and os.path.exists(preview):
+            return preview
+    except Exception:
+        pass
+    return None
 
 
 @feed_stories_bp.route('/')
@@ -150,6 +177,9 @@ def nuevo():
         except Exception:
             continue
 
+        if nombre_original.lower().endswith(('.mov', '.avi', '.mp4')):
+            _crear_preview_video(ruta)
+
         nuevo_id = FeedStoryDAO.insertar(
             tipo=tipo,
             fecha_publicacion=fecha_publicacion,
@@ -203,9 +233,15 @@ def ver_archivo(id):
     if not item:
         abort(404)
     ruta = item['archivo_ruta']
+    use_preview = request.args.get('preview') == '1'
+    if use_preview and item.get('archivo_nombre', '').lower().endswith(('.mov', '.avi', '.mp4')):
+        preview = _build_preview_path(ruta)
+        if os.path.exists(preview):
+            ruta = preview
     if not os.path.exists(ruta):
         abort(404)
-    mime = mimetypes.guess_type(item['archivo_nombre'] or '')[0]
+    nombre_mime = os.path.basename(ruta)
+    mime = mimetypes.guess_type(nombre_mime or '')[0]
     return send_file(ruta, mimetype=mime or None)
 
 
