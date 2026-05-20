@@ -1,0 +1,160 @@
+CREATE TABLE IF NOT EXISTS usuarios (
+  id BIGSERIAL PRIMARY KEY,
+  nombre VARCHAR(120) NOT NULL,
+  email VARCHAR(180) NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  rol VARCHAR(20) NOT NULL DEFAULT 'usuario',
+  activo BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS permisos_usuario (
+  id BIGSERIAL PRIMARY KEY,
+  usuario_id BIGINT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  modulo VARCHAR(60) NOT NULL,
+  puede_ver BOOLEAN NOT NULL DEFAULT TRUE,
+  puede_editar BOOLEAN NOT NULL DEFAULT FALSE,
+  puede_aprobar BOOLEAN NOT NULL DEFAULT FALSE,
+  UNIQUE (usuario_id, modulo)
+);
+
+CREATE TABLE IF NOT EXISTS configuracion (
+  id BIGSERIAL PRIMARY KEY,
+  clave VARCHAR(120) NOT NULL UNIQUE,
+  valor TEXT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS campanas (
+  id BIGSERIAL PRIMARY KEY,
+  nombre VARCHAR(180) NOT NULL,
+  mes INT NULL,
+  anio INT NULL,
+  presupuesto NUMERIC(14,2) NOT NULL DEFAULT 0,
+  gastado NUMERIC(14,2) NOT NULL DEFAULT 0,
+  descripcion TEXT NULL,
+  fecha_inicio DATE NULL,
+  fecha_fin DATE NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'activa',
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS tareas (
+  id BIGSERIAL PRIMARY KEY,
+  titulo VARCHAR(220) NOT NULL,
+  descripcion TEXT NULL,
+  estado VARCHAR(20) NOT NULL DEFAULT 'pendiente',
+  prioridad VARCHAR(20) NOT NULL DEFAULT 'media',
+  fecha_entrega DATE NULL,
+  campana_id BIGINT NULL REFERENCES campanas(id) ON DELETE SET NULL,
+  usuario_id BIGINT NULL REFERENCES usuarios(id) ON DELETE SET NULL,
+  postergaciones JSONB NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS influencers (
+  id BIGSERIAL PRIMARY KEY,
+  nombre VARCHAR(160) NOT NULL,
+  handle VARCHAR(160) NULL,
+  url_ig TEXT NULL,
+  whatsapp VARCHAR(60) NULL,
+  estado VARCHAR(30) NOT NULL DEFAULT 'nuevo',
+  notas TEXT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS colaboraciones (
+  id BIGSERIAL PRIMARY KEY,
+  influencer_id BIGINT NOT NULL REFERENCES influencers(id) ON DELETE CASCADE,
+  campana_id BIGINT NULL REFERENCES campanas(id) ON DELETE SET NULL,
+  tipo VARCHAR(30) NOT NULL DEFAULT 'contenido',
+  detalle TEXT NULL,
+  monto NUMERIC(14,2) NOT NULL DEFAULT 0,
+  permuta_tag VARCHAR(180) NULL,
+  fecha_entrega DATE NULL,
+  codigo_promo VARCHAR(120) NULL,
+  pct_comision NUMERIC(6,2) NULL,
+  pct_descuento NUMERIC(6,2) NULL,
+  estado VARCHAR(20) NOT NULL DEFAULT 'pendiente',
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS hitos_campana (
+  id BIGSERIAL PRIMARY KEY,
+  campana_id BIGINT NOT NULL REFERENCES campanas(id) ON DELETE CASCADE,
+  titulo VARCHAR(220) NOT NULL,
+  descripcion TEXT NULL,
+  lugar VARCHAR(220) NULL,
+  fecha_hora TIMESTAMP NOT NULL,
+  estado VARCHAR(20) NOT NULL DEFAULT 'pendiente',
+  historial_postergaciones JSONB NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS cal_eventos (
+  id BIGSERIAL PRIMARY KEY,
+  nombre VARCHAR(220) NOT NULL,
+  fecha DATE NOT NULL,
+  tipo VARCHAR(40) NOT NULL,
+  accion_sugerida TEXT NULL,
+  campana_id BIGINT NULL REFERENCES campanas(id) ON DELETE SET NULL,
+  destacado BOOLEAN NOT NULL DEFAULT FALSE,
+  color VARCHAR(20) NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS ecom_ventas (
+  id BIGSERIAL PRIMARY KEY,
+  influencer_id BIGINT NULL REFERENCES influencers(id) ON DELETE SET NULL,
+  mes INT NOT NULL,
+  anio INT NOT NULL,
+  monto NUMERIC(14,2) NOT NULL DEFAULT 0,
+  nota TEXT NULL,
+  fecha DATE NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS metas (
+  id BIGSERIAL PRIMARY KEY,
+  mes INT NOT NULL,
+  anio INT NOT NULL,
+  meta NUMERIC(14,2) NOT NULL DEFAULT 0,
+  UNIQUE (mes, anio)
+);
+
+CREATE TABLE IF NOT EXISTS ideas_campana (
+  id BIGSERIAL PRIMARY KEY,
+  nombre VARCHAR(180) NOT NULL,
+  descripcion TEXT NULL,
+  estado VARCHAR(20) NOT NULL DEFAULT 'borrador',
+  campana_id BIGINT NULL REFERENCES campanas(id) ON DELETE SET NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS idea_colaboraciones (
+  id BIGSERIAL PRIMARY KEY,
+  idea_id BIGINT NOT NULL REFERENCES ideas_campana(id) ON DELETE CASCADE,
+  influencer_id BIGINT NOT NULL REFERENCES influencers(id) ON DELETE CASCADE,
+  detalle TEXT NULL,
+  monto NUMERIC(14,2) NOT NULL DEFAULT 0,
+  fecha_entrega DATE NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS idea_hitos (
+  id BIGSERIAL PRIMARY KEY,
+  idea_id BIGINT NOT NULL REFERENCES ideas_campana(id) ON DELETE CASCADE,
+  titulo VARCHAR(180) NOT NULL,
+  descripcion TEXT NULL,
+  lugar VARCHAR(180) NULL,
+  fecha_hora TIMESTAMP NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS documentos (
+  id BIGSERIAL PRIMARY KEY,
+  tipo VARCHAR(40) NOT NULL,
+  datos JSONB NOT NULL DEFAULT '{}'::jsonb,
+  pdf_ruta TEXT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);

@@ -36,8 +36,9 @@ os.makedirs('static/uploads', exist_ok=True)
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['MAX_CONTENT_LENGTH'] = 52428800  # 50MB
 
-# Auto-bootstrap de tablas nuevas en Railway/local
-bootstrap_schema()
+# Auto-bootstrap de tablas nuevas (desactivable en produccion)
+if os.environ.get('BOOTSTRAP_SCHEMA', '1') == '1':
+    bootstrap_schema()
 
 # Flask-Login
 login_manager = LoginManager()
