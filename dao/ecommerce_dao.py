@@ -214,7 +214,7 @@ class EcommerceDAO:
                     m.mes,
                     m.anio,
                     m.meta,
-                    COALESCE(SUM(v.monto), 0) AS real
+                    COALESCE(SUM(v.monto), 0) AS real_total
                 FROM metas m
                 LEFT JOIN ecom_ventas v 
                     ON v.mes = m.mes AND v.anio = m.anio
@@ -222,7 +222,10 @@ class EcommerceDAO:
                 GROUP BY m.mes, m.anio, m.meta
                 ORDER BY m.mes
             """, (anio,))
-            return cursor.fetchall()
+            rows = cursor.fetchall()
+            for row in rows:
+                row['real'] = row.get('real_total', 0)
+            return rows
         except Exception as e:
             logging.error(f"❌ Error listar metas con real: {e}", exc_info=True)
             return []

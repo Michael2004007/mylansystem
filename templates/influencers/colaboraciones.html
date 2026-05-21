@@ -160,9 +160,11 @@
             <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:8px;flex-wrap:wrap">
               <a href="{{ url_for('influencers.editar_colaboracion', id=c.id) }}" class="btn-glow btn-ghost" style="font-size:10px;padding:4px 10px">Editar</a>
 
-              <form method="POST" action="{{ url_for('influencers.eliminar_colaboracion', id=c.id) }}" onsubmit="return confirm('¿Eliminar colaboración?')">
+              <form method="POST" action="{{ url_for('influencers.eliminar_colaboracion', id=c.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn-glow btn-danger-glow" style="font-size:10px;padding:4px 10px">Eliminar</button>
+                <button type="button" class="btn-glow btn-danger-glow btn-confirm-delete-colab"
+                        data-nombre="{{ c.influencer_nombre or 'esta colaboración' }}"
+                        style="font-size:10px;padding:4px 10px">Eliminar</button>
               </form>
 
               {% if not is_ecom and c.estado != 'hecho' %}
@@ -194,4 +196,27 @@
   {% endif %}
 
 </div>
+<script>
+document.addEventListener('click', function(e) {
+  const btn = e.target.closest('.btn-confirm-delete-colab');
+  if (!btn) return;
+  const form = btn.closest('form');
+  const nombre = btn.dataset.nombre || 'esta colaboración';
+  confirmAction({
+    type: 'danger',
+    icon: '⚠️',
+    title: 'Eliminar colaboración',
+    text: '¿Seguro que querés eliminar la colaboración de <strong>' + nombre + '</strong>? Esta acción no se puede deshacer.',
+    confirmText: 'Sí, eliminar',
+    url: '#'
+  });
+  const ok = document.getElementById('mcg-ok');
+  if (ok) {
+    ok.addEventListener('click', function(ev) {
+      ev.preventDefault();
+      form.submit();
+    }, { once: true });
+  }
+});
+</script>
 {% endblock %}

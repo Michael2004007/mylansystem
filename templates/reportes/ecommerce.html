@@ -144,9 +144,17 @@
           <td style="color:var(--text3)">#{{ v.id if v.id is defined else v['id'] }}</td>
           <td style="font-size:11px;color:var(--text2)">
             {% if v.fecha is defined %}
-              {{ v.fecha.strftime('%d/%m/%Y') if v.fecha else '—' }}
+              {% if v.fecha %}
+                {{ v.fecha if v.fecha is string else v.fecha.strftime('%d/%m/%Y') }}
+              {% else %}
+                —
+              {% endif %}
             {% else %}
-              {{ v['fecha'].strftime('%d/%m/%Y') if v['fecha'] else '—' }}
+              {% if v['fecha'] %}
+                {{ v['fecha'] if v['fecha'] is string else v['fecha'].strftime('%d/%m/%Y') }}
+              {% else %}
+                —
+              {% endif %}
             {% endif %}
           </td>
           <td style="color:{% if (v.influencer_nombre if v.influencer_nombre is defined else v.get('influencer_nombre')) == 'Orgánico' %}var(--green){% else %}var(--blue2){% endif %}">

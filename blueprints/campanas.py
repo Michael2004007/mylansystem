@@ -40,6 +40,9 @@ def index():
 @login_required
 def detalle(id):
     campana = CampanaDAO.obtener(id)
+    if not campana:
+        flash('Campaña no encontrada.', 'error')
+        return redirect(url_for('campanas.index'))
     colaboraciones = ColaboracionDAO.listar_por_campana(id)
     hitos = HitoDAO.listar_por_campana(id)
     influencers = InfluencerDAO.listar()
@@ -139,6 +142,9 @@ def agregar_colaboracion(campana_id):
             notas=None
         )
         influencer_id = InfluencerDAO.insertar(inf)
+        if not influencer_id:
+            flash('No se pudo crear el influencer.', 'error')
+            return redirect(url_for('campanas.detalle', id=campana_id))
 
     tipo_pago = request.form.get('tipo_pago', 'efectivo')
     permuta_tag = request.form.get('permuta_tag', '').strip() if tipo_pago == 'permuta' else None
@@ -148,9 +154,15 @@ def agregar_colaboracion(campana_id):
         flash('Monto inválido.', 'error')
         return redirect(url_for('campanas.detalle', id=campana_id))
 
+    try:
+        influencer_id = int(influencer_id)
+    except (TypeError, ValueError):
+        flash('Influencer inválido.', 'error')
+        return redirect(url_for('campanas.detalle', id=campana_id))
+
     colab = Colaboracion(
         id=None,
-        influencer_id=int(influencer_id),
+        influencer_id=influencer_id,
         campana_id=campana_id,
         tipo='normal',
         monto=monto,
@@ -160,7 +172,10 @@ def agregar_colaboracion(campana_id):
         fecha_entrega=request.form.get('fecha_entrega') or None,
         codigo_promo=None
     )
-    ColaboracionDAO.insertar(colab)
+    nuevo_id = ColaboracionDAO.insertar(colab)
+    if not nuevo_id:
+        flash('No se pudo guardar la colaboración. Revisá los datos e intentá de nuevo.', 'error')
+        return redirect(url_for('campanas.detalle', id=campana_id))
 
     if colab.monto:
         CampanaDAO.actualizar_gasto(campana_id, colab.monto)
@@ -205,6 +220,9 @@ def editar_colaboracion(colab_id):
 @login_required
 def eliminar_colaboracion(colab_id):
     colab      = ColaboracionDAO.obtener(colab_id)
+    if not colab:
+        flash('Colaboración no encontrada.', 'error')
+        return redirect(url_for('campanas.index'))
     campana_id = colab.campana_id
     if colab.monto:
         CampanaDAO.actualizar_gasto(campana_id, -colab.monto)
@@ -217,7 +235,7 @@ def eliminar_colaboracion(colab_id):
 @login_required
 def agregar_hito(campana_id):
     titulo = (request.form.get('titulo') or '').strip()
-    fecha_hora = request.form.get('fecha_hora')
+    fecha_hora = (request.form.get('fecha_hora') or '').strip().replace('T', ' ')
     if not titulo or not fecha_hora:
         flash('Completá título y fecha del hito.', 'error')
         return redirect(url_for('campanas.detalle', id=campana_id))
@@ -231,7 +249,10 @@ def agregar_hito(campana_id):
         fecha_hora=fecha_hora,
         estado='pendiente'
     )
-    HitoDAO.insertar(hito)
+    nuevo_id = HitoDAO.insertar(hito)
+    if not nuevo_id:
+        flash('No se pudo guardar el hito. Verificá fecha y datos.', 'error')
+        return redirect(url_for('campanas.detalle', id=campana_id))
     flash('Hito agregado.', 'success')
     return redirect(url_for('campanas.detalle', id=campana_id))
 
@@ -240,6 +261,9 @@ def agregar_hito(campana_id):
 @login_required
 def hito_hecho(hito_id):
     hito = HitoDAO.obtener(hito_id)
+    if not hito:
+        flash('Hito no encontrado.', 'error')
+        return redirect(url_for('campanas.index'))
     HitoDAO.marcar_hecho(hito_id)
     flash('Hito marcado como hecho.', 'success')
     return redirect(url_for('campanas.detalle', id=hito.campana_id))
@@ -249,7 +273,10 @@ def hito_hecho(hito_id):
 @login_required
 def hito_postergar(hito_id):
     hito       = HitoDAO.obtener(hito_id)
-    nueva_fecha = request.form['nueva_fecha']
+    if not hito:
+        flash('Hito no encontrado.', 'error')
+        return redirect(url_for('campanas.index'))
+    nueva_fecha = (request.form['nueva_fecha'] or '').strip().replace('T', ' ')
     motivo     = request.form['motivo']
     HitoDAO.postergar(hito_id, nueva_fecha, motivo)
     flash('Hito postergado.', 'success')
@@ -260,6 +287,9 @@ def hito_postergar(hito_id):
 @login_required
 def hito_eliminar(hito_id):
     hito = HitoDAO.obtener(hito_id)
+    if not hito:
+        flash('Hito no encontrado.', 'error')
+        return redirect(url_for('campanas.index'))
     HitoDAO.eliminar(hito_id)
     flash('Hito eliminado.', 'error')
     return redirect(url_for('campanas.detalle', id=hito.campana_id))

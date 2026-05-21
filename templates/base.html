@@ -143,6 +143,22 @@
     .modal-confirm-btns .btn-glow{padding:9px 22px;font-size:12px;font-weight:500}
     @keyframes fadeInModal{from{opacity:0}to{opacity:1}}
     @keyframes scaleInModal{from{transform:scale(.88) translateY(8px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+
+    @media (max-width: 980px){
+      .sys{display:block;height:auto;min-height:100vh}
+      .sidebar{
+        width:100%;
+        border-right:none;
+        border-bottom:1px solid var(--dk-border);
+        max-height:none;
+      }
+      .main{width:100%;overflow-x:hidden}
+      .page{padding:14px}
+      .topbar{flex-wrap:wrap;gap:10px}
+      .form-grid,.form-grid.three{grid-template-columns:1fr}
+      .glow-card{padding:12px}
+      .dark-table{display:block;overflow-x:auto;white-space:nowrap}
+    }
   </style>
 </head>
 <body>

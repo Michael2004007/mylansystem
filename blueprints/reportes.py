@@ -20,6 +20,21 @@ from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 reportes_bp = Blueprint('reportes', __name__)
 
 
+def _coerce_fecha(fecha_val):
+    if not fecha_val:
+        return None
+    if isinstance(fecha_val, (datetime, date)):
+        return fecha_val
+    if isinstance(fecha_val, str):
+        txt = fecha_val.strip()
+        for fmt in ('%Y-%m-%d', '%Y-%m-%d %H:%M:%S'):
+            try:
+                return datetime.strptime(txt, fmt)
+            except ValueError:
+                continue
+    return None
+
+
 def crear_header_footer(canvas_obj, doc):
     """Header y footer profesional para todos los PDFs"""
     canvas_obj.saveState()
@@ -755,6 +770,7 @@ def ecommerce():
         else:
             fecha_venta = v.fecha
 
+        fecha_venta = _coerce_fecha(fecha_venta)
         if fecha_venta and fecha_venta.month == mes and fecha_venta.year == anio:
             ventas.append(v)
             dias_con_ventas.add(fecha_venta.day)
@@ -810,6 +826,7 @@ def ecommerce_pdf():
         else:
             fecha_venta = v.fecha
 
+        fecha_venta = _coerce_fecha(fecha_venta)
         if fecha_venta and fecha_venta.month == mes and fecha_venta.year == anio:
             ventas.append(v)
             dias_con_ventas.add(fecha_venta.day)
@@ -904,6 +921,7 @@ def ecommerce_pdf():
             v_monto = float(v.monto)
             v_nota = v.nota or ''
 
+        v_fecha = _coerce_fecha(v_fecha)
         data.append([
             f'#{v_id}',
             v_fecha.strftime('%d/%m/%Y') if v_fecha else '—',
@@ -957,6 +975,7 @@ def ecommerce_excel():
         else:
             fecha_venta = v.fecha
 
+        fecha_venta = _coerce_fecha(fecha_venta)
         if fecha_venta and fecha_venta.month == mes and fecha_venta.year == anio:
             ventas.append(v)
 
@@ -995,6 +1014,7 @@ def ecommerce_excel():
             v_monto = v.monto
             v_nota = v.nota or ''
 
+        v_fecha = _coerce_fecha(v_fecha)
         row_data = [
             v_id,
             v_fecha.strftime('%d/%m/%Y') if v_fecha else '',
