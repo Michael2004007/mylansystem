@@ -88,7 +88,7 @@
           <a href="{{ url_for('influencers.editar', id=i.id) }}"
              class="btn-glow btn-cyan-glow" style="font-size:10px;padding:4px 10px">Editar</a>
           <button class="btn-glow btn-danger-glow" style="font-size:10px;padding:4px 8px"
-                  onclick="confirmAction({icon:'✕',title:'¿Eliminar influencer?',text:'<strong>{{ i.nombre }}</strong> será eliminado.',url:'{{ url_eliminar }}',confirmText:'Sí, eliminar',type:'danger'})">✕</button>
+                  onclick='confirmAction({icon:"✕",title:"¿Eliminar influencer?",text:{{ ("<strong>" ~ i.nombre ~ "</strong> sera eliminado.")|tojson }},url:{{ url_eliminar|tojson }},confirmText:"Sí, eliminar",type:"danger"})'>✕</button>
         </div>
       </div>
     {% endfor %}

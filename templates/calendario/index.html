@@ -3,6 +3,7 @@
 
 {% block content %}
 <div class="page">
+  {% set nombres_mes = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'] %}
   <div class="topbar">
     <div>
       <div class="page-title">Calendario Anual {{ anio }}</div>
@@ -24,7 +25,12 @@
           <div style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;background:{{ bg }}22;border:1px solid {{ bg }}55">
             <span style="width:8px;height:8px;border-radius:50%;background:{{ bg }};flex-shrink:0;display:inline-block"></span>
             <span style="font-size:11px;font-weight:500;color:{{ bg }}">{{ d.nombre }}</span>
-            <button onclick="abrirEliminarDestacado({{ d.id }}, '{{ d.nombre }}')"
+            {% if d.fecha %}
+              <span style="font-size:10px;color:var(--text2);border-left:1px solid {{ bg }}44;padding-left:6px">
+                {{ d.fecha.strftime('%d/%m/%Y') if d.fecha.strftime is defined else d.fecha }}
+              </span>
+            {% endif %}
+            <button onclick='abrirEliminarDestacado({{ d.id }}, {{ d.nombre|tojson }})'
                     style="background:none;border:none;cursor:pointer;color:{{ bg }};opacity:.6;font-size:11px;padding:0;line-height:1">✕</button>
           </div>
         {% endfor %}
@@ -35,7 +41,6 @@
   </div>
 
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px">
-    {% set nombres_mes = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'] %}
     {% for num in range(1,13) %}
       {% set c = namespace(n=0) %}
       {% for e in eventos %}

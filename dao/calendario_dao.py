@@ -54,7 +54,7 @@ class CalendarioDAO:
             cursor = conn.cursor(dictionary=True)
             if Conexion.es_postgres():
                 cursor.execute("""SELECT * FROM cal_eventos
-                                  WHERE destacado=1
+                                  WHERE destacado IS TRUE
                                     AND EXTRACT(YEAR FROM fecha)=%s
                                   ORDER BY fecha""", (anio,))
             else:
@@ -74,6 +74,8 @@ class CalendarioDAO:
         try:
             conn = Conexion.obtener_conexion()
             cursor = conn.cursor()
+            if Conexion.es_postgres():
+                destacado = bool(destacado)
             cursor.execute("""INSERT INTO cal_eventos (nombre, fecha, tipo, accion_sugerida, campana_id, destacado, color)
                               VALUES (%s, %s, %s, %s, %s, %s, %s)""",
                            (nombre, fecha, tipo, accion_sugerida, campana_id, destacado, color))

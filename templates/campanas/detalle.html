@@ -96,11 +96,11 @@
             {% endif %}
             <div style="display:flex;gap:4px;justify-content:flex-end;margin-top:6px">
               <button class="btn-glow btn-cyan-glow" style="font-size:9px;padding:3px 8px"
-                      onclick="abrirEditarColab({{ col.id }}, '{{ col.tipo_pago or 'efectivo' }}', {{ col.monto or 0 }}, '{{ col.detalle or '' }}', '{{ col.fecha_entrega or '' }}', '{{ col.permuta_tag or '' }}')">
+                      onclick='abrirEditarColab({{ col.id }}, {{ (col.tipo_pago or "efectivo")|tojson }}, {{ col.monto or 0 }}, {{ (col.detalle or "")|tojson }}, {{ (col.fecha_entrega|string if col.fecha_entrega else "")|tojson }}, {{ (col.permuta_tag or "")|tojson }})'>
                 Editar
               </button>
               <button class="btn-glow btn-danger-glow" style="font-size:9px;padding:3px 8px"
-                      onclick="confirmarEliminarColaboracion('{{ col.id }}', '{{ col.influencer_nombre or 'esta colaboración' }}')">✕</button>
+                      onclick='confirmarEliminarColaboracion({{ col.id }}, {{ (col.influencer_nombre or "esta colaboracion")|tojson }})'>✕</button>
             </div>
           </div>
         </div>
@@ -200,7 +200,7 @@
               <button class="btn-glow btn-ghost" style="font-size:9px;padding:3px 7px"
                       onclick="abrirPostergar({{ h.id }})">📆 Postergar</button>
               <button class="btn-glow btn-danger-glow" style="font-size:9px;padding:3px 7px"
-                      onclick="confirmarEliminarHito('{{ h.id }}', '{{ h.titulo }}')">✕</button>
+                      onclick='confirmarEliminarHito({{ h.id }}, {{ h.titulo|tojson }})'>✕</button>
             </div>
             {% elif h.estado == 'postergado' %}
             <div style="display:flex;flex-direction:column;gap:3px;flex-shrink:0">
@@ -209,7 +209,7 @@
               <button class="btn-glow btn-ghost" style="font-size:9px;padding:3px 7px"
                       onclick="abrirPostergar({{ h.id }})">📆 Re-postergar</button>
               <button class="btn-glow btn-danger-glow" style="font-size:9px;padding:3px 7px"
-                      onclick="confirmarEliminarHito('{{ h.id }}', '{{ h.titulo }}')">✕</button>
+                      onclick='confirmarEliminarHito({{ h.id }}, {{ h.titulo|tojson }})'>✕</button>
             </div>
             {% endif %}
           </div>

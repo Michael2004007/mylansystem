@@ -15,6 +15,24 @@ def bootstrap_schema():
 
         cursor.execute(
             """
+            CREATE TABLE IF NOT EXISTS cal_eventos (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              nombre VARCHAR(220) NOT NULL,
+              fecha DATE NOT NULL,
+              tipo VARCHAR(40) NOT NULL,
+              accion_sugerida TEXT NULL,
+              campana_id INT NULL,
+              destacado TINYINT(1) NOT NULL DEFAULT 0,
+              color VARCHAR(20) NULL,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              INDEX idx_cal_fecha (fecha),
+              INDEX idx_cal_destacado (destacado)
+            )
+            """
+        )
+
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS ideas_campana (
               id INT AUTO_INCREMENT PRIMARY KEY,
               nombre VARCHAR(180) NOT NULL,
@@ -62,6 +80,16 @@ def bootstrap_schema():
             cursor.execute(
                 "ALTER TABLE permisos_usuario ADD COLUMN puede_aprobar TINYINT(1) NOT NULL DEFAULT 0"
             )
+
+        cursor.execute("SHOW COLUMNS FROM cal_eventos LIKE 'destacado'")
+        if not cursor.fetchone():
+            cursor.execute(
+                "ALTER TABLE cal_eventos ADD COLUMN destacado TINYINT(1) NOT NULL DEFAULT 0"
+            )
+
+        cursor.execute("SHOW COLUMNS FROM cal_eventos LIKE 'color'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE cal_eventos ADD COLUMN color VARCHAR(20) NULL")
 
         conn.commit()
         print("Schema bootstrap OK")
